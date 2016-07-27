@@ -1,0 +1,26 @@
+{
+  "name": "sh-input-select",
+  "version": "0.1.0",
+  "description": "Select input box superhero theme",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SuperheroUI/shSelectText"
+  },
+  "keywords": [
+    "select",
+    "input",
+    "field",
+    "superheroui",
+    "react",
+    "component"
+  ],
+  "author": "Kevin <kevinbatchelor@gmail.com>",
+  "license": "MIT",
+  "devDependencies":{
+    "sh-core": "0.1.0"
+  }
+}
