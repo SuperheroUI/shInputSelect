@@ -1,11 +1,34 @@
-import React from 'react'
+import React from 'react';
 import * as _ from 'lodash';
-
 import utilClasses from './util-classes.service.js';
 
 require('./sh-input-select.scss');
 
+let defaultConfig = {
+    getDisplay: (option) => {
+        if (_.isObject(option)) {
+            if (option.name) {
+                return option.name;
+            } else {
+                return JSON.stringify(option);
+            }
+        } else {
+            return option;
+        }
+    },
+    multiselect: false,
+    idField: null,
+    tree: false,
+    treeHasChildren: (options, option) => {
+        return !!_.find(options, {parentId: option.id});
+    },
+    treeGetChildren: (options, option) => {
+        return _.filter(options, {parentId: (option ? option.id : null)})
+    }
+};
+
 class ShInputSelect extends React.Component {
+    /** @namespace this.refs.inputElement */
     /** @namespace this.refs.dropdownElement */
     /** @namespace this.refs.mainElement */
 
@@ -13,7 +36,10 @@ class ShInputSelect extends React.Component {
         super();
         this.state = {
             value: null,
-            dropdownOpen: false
+            dropdownOpen: false,
+            config: _.cloneDeep(defaultConfig),
+            treeCurrent: null,
+            treePath: []
         };
 
         this.checkDocumentEvent = this.checkDocumentEvent.bind(this);
@@ -25,14 +51,20 @@ class ShInputSelect extends React.Component {
     }
 
     componentWillMount() {
-        this.updateState(this.props.value);
+        this.setState({
+            config: _.assign(this.state.config, this.props.config)
+        });
+        this.updateStateValue(this.props.value);
 
         document.addEventListener('click', this.checkDocumentEvent);
         document.addEventListener('keyup', this.checkDocumentEvent);
     }
 
     componentWillReceiveProps(props) {
-        this.updateState(props.value);
+        this.setState({
+            config: _.assign(this.state.config, this.props.config)
+        });
+        this.updateStateValue(props.value);
     }
 
     componentWillUnmount() {
@@ -48,7 +80,7 @@ class ShInputSelect extends React.Component {
         }
     }
 
-    updateState(value) {
+    updateStateValue(value) {
         if (this.isMulti()) {
             let newValue = this.props.options.filter((option) => {
                 return !!_.includes(value, this.getIdField(option));
@@ -65,7 +97,6 @@ class ShInputSelect extends React.Component {
     }
 
     inputKeyUp(event) {
-        console.log('event', event.keyCode);
         switch (event.keyCode) {
             case 32: { // Space
                 this.toggleDropdown();
@@ -78,7 +109,7 @@ class ShInputSelect extends React.Component {
                 break;
             }
             case 40: { // Down Arrow
-                this.navigateTab(-1, -1);
+                this.navigateTab(-1, -2);
             }
         }
     }
@@ -91,7 +122,6 @@ class ShInputSelect extends React.Component {
 
     optionKeyUp(option, index) {
         return (event) => {
-            console.log('event', event);
             switch (event.keyCode) {
                 case 32: { // Space
                     this.optionSelect(option)();
@@ -122,14 +152,17 @@ class ShInputSelect extends React.Component {
             });
         }
 
+        let minIndex = (this.state.treeCurrent ? -1 : 0);
+
         let currentElement = null;
-        if (index < 0) {
+        if (index < minIndex) {
             currentElement = this.refs.dropdownElement.lastElementChild;
         } else {
-            currentElement = this.refs.dropdownElement.children[index];
+            currentElement = this.refs.dropdownElement.children[index + (-1 * minIndex)];
         }
 
         let nextElement = null;
+
         if (direction < 0) {
             nextElement = currentElement.nextElementSibling;
 
@@ -156,7 +189,25 @@ class ShInputSelect extends React.Component {
      */
     optionSelect(option) {
         return () => {
-            if (this.isMulti()) {
+            if (this.isTree() && this.state.config.treeHasChildren(this.props.options, option)) {
+                this.refs.inputElement.focus();
+                if (this.state.treeCurrent == option) {
+                    this.setState({
+                        treeCurrent: _.last(this.state.treePath),
+                        treePath: _.dropRight(this.state.treePath)
+                    });
+                } else {
+                    var treePath = this.state.treePath;
+                    if (this.state.treeCurrent) {
+                        treePath = _.concat(treePath, this.state.treeCurrent);
+                    }
+
+                    this.setState({
+                        treeCurrent: option,
+                        treePath: treePath
+                    });
+                }
+            } else if (this.isMulti()) {
                 if (_.includes(this.state.value, option)) {
                     let newValue = _.without(this.state.value, option);
                     this.setState({
@@ -196,8 +247,8 @@ class ShInputSelect extends React.Component {
      * @returns {*} the value of the idField or the entire object
      */
     getIdField(option) {
-        if (this.props.config.idField) {
-            return _.get(option, this.props.config.idField);
+        if (this.state.config.idField) {
+            return _.get(option, this.state.config.idField);
         } else {
             return option;
         }
@@ -209,9 +260,9 @@ class ShInputSelect extends React.Component {
      * @returns {object} Option that matches passed in value
      */
     getOption(value) {
-        if (this.props.config.idField) {
+        if (this.state.config.idField) {
             let search = {};
-            _.set(search, this.props.config.idField, value);
+            _.set(search, this.state.config.idField, value);
             return _.find(this.props.options, search);
         } else {
             return value;
@@ -224,17 +275,21 @@ class ShInputSelect extends React.Component {
      * @returns {string} Visual representation of this option
      */
     getDisplay(option) {
-        if (_.isFunction(this.props.config.getDisplay)) {
-            return this.props.config.getDisplay(option);
-        } else if (_.isString(this.props.config.getDisplay)) {
-            return _.get(option, this.props.config.getDisplay);
+        if (_.isFunction(this.state.config.getDisplay)) {
+            return this.state.config.getDisplay(option);
+        } else if (_.isString(this.state.config.getDisplay)) {
+            return _.get(option, this.state.config.getDisplay);
         } else {
             return JSON.stringify(option);
         }
     }
 
     isMulti() {
-        return this.props.config.type === 'multi';
+        return this.state.config.multiselect;
+    }
+
+    isTree() {
+        return this.state.config.tree;
     }
 
     render() {
@@ -261,13 +316,18 @@ class ShInputSelect extends React.Component {
             inputSelected = this.getDisplay(this.state.value);
         }
         let input = (
-            <div className="input" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp}>
+            <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp}>
                 <div className="inputSelected">{inputSelected}</div>
                 <i className="icon-chevronDown">V</i>
             </div>
         );
 
-        let options = this.props.options.map((current, index) => {
+        let preOptions = this.props.options;
+        if (this.isTree()) {
+            preOptions = this.state.config.treeGetChildren(preOptions, this.state.treeCurrent);
+        }
+
+        let options = preOptions.map((current, index) => {
             let showSelected = null;
             if (this.isMulti()) {
                 if (_.includes(this.state.value, current)) {
@@ -277,23 +337,42 @@ class ShInputSelect extends React.Component {
                 }
             }
 
+            let showTree = null;
+            if (this.isTree()) {
+                if (this.state.config.treeHasChildren(this.props.options, current)) {
+                    showTree = <i className="icon-chevronRight">&gt;</i>
+                }
+            }
+
             return (
                 <div key={index} className="option" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)}>
                     {showSelected}
                     <div className="optionDetails">{this.getDisplay(current)}</div>
+                    {showTree}
                 </div>
             );
         });
 
+        let treeBack = null;
+        if (this.isTree() && this.state.treeCurrent) {
+            treeBack = (
+                <div key="back" className="option back" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(this.state.treeCurrent)} onKeyUp={this.optionKeyUp(this.state.treeCurrent, -1)}>
+                    <i className="icon-chevronLeft">&lt;</i>
+                    <div className="optionDetails">{this.getDisplay(this.state.treeCurrent)}</div>
+                </div>
+            )
+        }
+
         let dropdownClasses = {
             dropdown: true,
-            single: !this.isMulti(),
-            multi: this.isMulti()
+            multi: this.isMulti(),
+            tree: this.isTree()
         };
 
         let dropdown = (
             <div className="dropdownWrapper">
                 <div className={utilClasses.getClassNames(dropdownClasses)} ref="dropdownElement">
+                    {treeBack}
                     {options}
                 </div>
             </div>
@@ -319,21 +398,7 @@ ShInputSelect.defaultProps = {
     value: null,
     options: [],
     onChange: _.noop,
-    config: {
-        getDisplay: (option) => {
-            if (_.isObject(option)) {
-                if (option.name) {
-                    return option.name;
-                } else {
-                    return JSON.stringify(option);
-                }
-            } else {
-                return option;
-            }
-        },
-        type: 'single',
-        idField: null,
-    }
+    config: defaultConfig
 };
 
 export default ShInputSelect;

@@ -77,8 +77,12 @@
 	    getDisplay: function getDisplay(option) {
 	        return option.name + ' - ' + option.desc;
 	    },
-	    type: 'multi',
+	    multiselect: true,
 	    idField: 'id'
+	};
+	
+	var config3 = {
+	    tree: true
 	};
 	
 	var App = function (_React$Component) {
@@ -91,6 +95,8 @@
 	
 	        _this.options = [{ name: 'New', desc: 'New Contact', id: 1 }, { name: 'Contact', desc: 'Contact already established', id: 2 }, { name: 'Customer', desc: 'Bought Already', id: 3 }];
 	
+	        _this.options3 = [{ name: 'Documents', id: 1, parentId: null }, { name: 'Pictures', id: 2, parentId: null }, { name: 'budget.xls', id: 3, parentId: null }, { name: 'resume.doc', id: 4, parentId: 1 }, { name: 'will.doc', id: 5, parentId: 1 }, { name: 'headshot.jpg', id: 6, parentId: 2 }, { name: 'car.jpg', id: 7, parentId: 2 }, { name: 'selfies', id: 8, parentId: 2 }, { name: 'vegas.jpg', id: 9, parentId: 8 }, { name: 'hawii.jpg', id: 10, parentId: 8 }];
+	
 	        _this.state = {
 	            value1: null,
 	            value2: [2]
@@ -99,6 +105,7 @@
 	        _this.handleChange1 = _this.handleChange1.bind(_this);
 	        _this.handleChange2 = _this.handleChange2.bind(_this);
 	        _this.update2 = _this.update2.bind(_this);
+	        _this.handleChange3 = _this.handleChange3.bind(_this);
 	        return _this;
 	    }
 	
@@ -121,6 +128,13 @@
 	        value: function update2() {
 	            this.setState({
 	                value2: [3]
+	            });
+	        }
+	    }, {
+	        key: 'handleChange3',
+	        value: function handleChange3(newValue) {
+	            this.setState({
+	                value3: newValue
 	            });
 	        }
 	    }, {
@@ -153,6 +167,11 @@
 	                    'div',
 	                    { style: { width: '400px' } },
 	                    _react2.default.createElement(_shInputSelect2.default, { value: this.state.value2, options: this.options, onChange: this.handleChange2, config: config2 })
+	                ),
+	                _react2.default.createElement(
+	                    'div',
+	                    { style: { width: '300px' } },
+	                    _react2.default.createElement(_shInputSelect2.default, { value: this.state.value3, options: this.options3, onChange: this.handleChange3, config: config3 })
 	                )
 	            );
 	        }
@@ -21912,9 +21931,33 @@
 	
 						__webpack_require__( /*! ./sh-input-select.scss */5);
 	
+						var defaultConfig = {
+							getDisplay: function getDisplay(option) {
+								if (_.isObject(option)) {
+									if (option.name) {
+										return option.name;
+									} else {
+										return JSON.stringify(option);
+									}
+								} else {
+									return option;
+								}
+							},
+							multiselect: false,
+							idField: null,
+							tree: false,
+							treeHasChildren: function treeHasChildren(options, option) {
+								return !!_.find(options, { parentId: option.id });
+							},
+							treeGetChildren: function treeGetChildren(options, option) {
+								return _.filter(options, { parentId: option ? option.id : null });
+							}
+						};
+	
 						var ShInputSelect = function (_React$Component) {
 							_inherits(ShInputSelect, _React$Component);
 	
+							/** @namespace this.refs.inputElement */
 							/** @namespace this.refs.dropdownElement */
 							/** @namespace this.refs.mainElement */
 	
@@ -21925,7 +21968,10 @@
 	
 								_this.state = {
 									value: null,
-									dropdownOpen: false
+									dropdownOpen: false,
+									config: _.cloneDeep(defaultConfig),
+									treeCurrent: null,
+									treePath: []
 								};
 	
 								_this.checkDocumentEvent = _this.checkDocumentEvent.bind(_this);
@@ -21940,7 +21986,10 @@
 							_createClass(ShInputSelect, [{
 								key: 'componentWillMount',
 								value: function componentWillMount() {
-									this.updateState(this.props.value);
+									this.setState({
+										config: _.assign(this.state.config, this.props.config)
+									});
+									this.updateStateValue(this.props.value);
 	
 									document.addEventListener('click', this.checkDocumentEvent);
 									document.addEventListener('keyup', this.checkDocumentEvent);
@@ -21948,7 +21997,10 @@
 							}, {
 								key: 'componentWillReceiveProps',
 								value: function componentWillReceiveProps(props) {
-									this.updateState(props.value);
+									this.setState({
+										config: _.assign(this.state.config, this.props.config)
+									});
+									this.updateStateValue(props.value);
 								}
 							}, {
 								key: 'componentWillUnmount',
@@ -21966,8 +22018,8 @@
 									}
 								}
 							}, {
-								key: 'updateState',
-								value: function updateState(value) {
+								key: 'updateStateValue',
+								value: function updateStateValue(value) {
 									var _this2 = this;
 	
 									if (this.isMulti()) {
@@ -21987,7 +22039,6 @@
 							}, {
 								key: 'inputKeyUp',
 								value: function inputKeyUp(event) {
-									console.log('event', event.keyCode);
 									switch (event.keyCode) {
 										case 32:
 											{
@@ -22006,7 +22057,7 @@
 										case 40:
 											{
 												// Down Arrow
-												this.navigateTab(-1, -1);
+												this.navigateTab(-1, -2);
 											}
 									}
 								}
@@ -22023,7 +22074,6 @@
 									var _this3 = this;
 	
 									return function (event) {
-										console.log('event', event);
 										switch (event.keyCode) {
 											case 32:
 												{
@@ -22063,14 +22113,17 @@
 										});
 									}
 	
+									var minIndex = this.state.treeCurrent ? -1 : 0;
+	
 									var currentElement = null;
-									if (index < 0) {
+									if (index < minIndex) {
 										currentElement = this.refs.dropdownElement.lastElementChild;
 									} else {
-										currentElement = this.refs.dropdownElement.children[index];
+										currentElement = this.refs.dropdownElement.children[index + -1 * minIndex];
 									}
 	
 									var nextElement = null;
+	
 									if (direction < 0) {
 										nextElement = currentElement.nextElementSibling;
 	
@@ -22102,7 +22155,25 @@
 									var _this4 = this;
 	
 									return function () {
-										if (_this4.isMulti()) {
+										if (_this4.isTree() && _this4.state.config.treeHasChildren(_this4.props.options, option)) {
+											_this4.refs.inputElement.focus();
+											if (_this4.state.treeCurrent == option) {
+												_this4.setState({
+													treeCurrent: _.last(_this4.state.treePath),
+													treePath: _.dropRight(_this4.state.treePath)
+												});
+											} else {
+												var treePath = _this4.state.treePath;
+												if (_this4.state.treeCurrent) {
+													treePath = _.concat(treePath, _this4.state.treeCurrent);
+												}
+	
+												_this4.setState({
+													treeCurrent: option,
+													treePath: treePath
+												});
+											}
+										} else if (_this4.isMulti()) {
 											if (_.includes(_this4.state.value, option)) {
 												var newValue = _.without(_this4.state.value, option);
 												_this4.setState({
@@ -22145,8 +22216,8 @@
 							}, {
 								key: 'getIdField',
 								value: function getIdField(option) {
-									if (this.props.config.idField) {
-										return _.get(option, this.props.config.idField);
+									if (this.state.config.idField) {
+										return _.get(option, this.state.config.idField);
 									} else {
 										return option;
 									}
@@ -22161,9 +22232,9 @@
 							}, {
 								key: 'getOption',
 								value: function getOption(value) {
-									if (this.props.config.idField) {
+									if (this.state.config.idField) {
 										var search = {};
-										_.set(search, this.props.config.idField, value);
+										_.set(search, this.state.config.idField, value);
 										return _.find(this.props.options, search);
 									} else {
 										return value;
@@ -22179,10 +22250,10 @@
 							}, {
 								key: 'getDisplay',
 								value: function getDisplay(option) {
-									if (_.isFunction(this.props.config.getDisplay)) {
-										return this.props.config.getDisplay(option);
-									} else if (_.isString(this.props.config.getDisplay)) {
-										return _.get(option, this.props.config.getDisplay);
+									if (_.isFunction(this.state.config.getDisplay)) {
+										return this.state.config.getDisplay(option);
+									} else if (_.isString(this.state.config.getDisplay)) {
+										return _.get(option, this.state.config.getDisplay);
 									} else {
 										return JSON.stringify(option);
 									}
@@ -22190,7 +22261,12 @@
 							}, {
 								key: 'isMulti',
 								value: function isMulti() {
-									return this.props.config.type === 'multi';
+									return this.state.config.multiselect;
+								}
+							}, {
+								key: 'isTree',
+								value: function isTree() {
+									return this.state.config.tree;
 								}
 							}, {
 								key: 'render',
@@ -22219,9 +22295,14 @@
 									} else if (this.state.value) {
 										inputSelected = this.getDisplay(this.state.value);
 									}
-									var input = _react2.default.createElement('div', { className: 'input', tabIndex: '0', onClick: this.toggleDropdown, onKeyUp: this.inputKeyUp }, _react2.default.createElement('div', { className: 'inputSelected' }, inputSelected), _react2.default.createElement('i', { className: 'icon-chevronDown' }, 'V'));
+									var input = _react2.default.createElement('div', { className: 'input', ref: 'inputElement', tabIndex: '0', onClick: this.toggleDropdown, onKeyUp: this.inputKeyUp }, _react2.default.createElement('div', { className: 'inputSelected' }, inputSelected), _react2.default.createElement('i', { className: 'icon-chevronDown' }, 'V'));
 	
-									var options = this.props.options.map(function (current, index) {
+									var preOptions = this.props.options;
+									if (this.isTree()) {
+										preOptions = this.state.config.treeGetChildren(preOptions, this.state.treeCurrent);
+									}
+	
+									var options = preOptions.map(function (current, index) {
 										var showSelected = null;
 										if (_this5.isMulti()) {
 											if (_.includes(_this5.state.value, current)) {
@@ -22231,16 +22312,28 @@
 											}
 										}
 	
-										return _react2.default.createElement('div', { key: index, className: 'option', tabIndex: _this5.state.dropdownOpen ? 0 : -1, onClick: _this5.optionSelect(current), onKeyUp: _this5.optionKeyUp(current, index) }, showSelected, _react2.default.createElement('div', { className: 'optionDetails' }, _this5.getDisplay(current)));
+										var showTree = null;
+										if (_this5.isTree()) {
+											if (_this5.state.config.treeHasChildren(_this5.props.options, current)) {
+												showTree = _react2.default.createElement('i', { className: 'icon-chevronRight' }, '>');
+											}
+										}
+	
+										return _react2.default.createElement('div', { key: index, className: 'option', tabIndex: _this5.state.dropdownOpen ? 0 : -1, onClick: _this5.optionSelect(current), onKeyUp: _this5.optionKeyUp(current, index) }, showSelected, _react2.default.createElement('div', { className: 'optionDetails' }, _this5.getDisplay(current)), showTree);
 									});
+	
+									var treeBack = null;
+									if (this.isTree() && this.state.treeCurrent) {
+										treeBack = _react2.default.createElement('div', { key: 'back', className: 'option back', tabIndex: this.state.dropdownOpen ? 0 : -1, onClick: this.optionSelect(this.state.treeCurrent), onKeyUp: this.optionKeyUp(this.state.treeCurrent, -1) }, _react2.default.createElement('i', { className: 'icon-chevronLeft' }, '<'), _react2.default.createElement('div', { className: 'optionDetails' }, this.getDisplay(this.state.treeCurrent)));
+									}
 	
 									var dropdownClasses = {
 										dropdown: true,
-										single: !this.isMulti(),
-										multi: this.isMulti()
+										multi: this.isMulti(),
+										tree: this.isTree()
 									};
 	
-									var dropdown = _react2.default.createElement('div', { className: 'dropdownWrapper' }, _react2.default.createElement('div', { className: _utilClassesService2.default.getClassNames(dropdownClasses), ref: 'dropdownElement' }, options));
+									var dropdown = _react2.default.createElement('div', { className: 'dropdownWrapper' }, _react2.default.createElement('div', { className: _utilClassesService2.default.getClassNames(dropdownClasses), ref: 'dropdownElement' }, treeBack, options));
 	
 									return _react2.default.createElement('div', { ref: 'mainElement', className: _utilClassesService2.default.getClassNames(mainClasses) }, input, dropdown);
 								}
@@ -22260,21 +22353,7 @@
 							value: null,
 							options: [],
 							onChange: _.noop,
-							config: {
-								getDisplay: function getDisplay(option) {
-									if (_.isObject(option)) {
-										if (option.name) {
-											return option.name;
-										} else {
-											return JSON.stringify(option);
-										}
-									} else {
-										return option;
-									}
-								},
-								type: 'single',
-								idField: null
-							}
+							config: defaultConfig
 						};
 	
 						exports.default = ShInputSelect;
@@ -22431,7 +22510,7 @@
 	
 	
 				// module
-				exports.push([module.id, "body {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: 0;\n  padding: 20px;\n  background: linear-gradient(#284D51, #304853) fixed; }\n\n.shInputSelect {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  height: 40px;\n  font-size: 16px;\n  color: rgba(255, 255, 255, 0.8); }\n  .shInputSelect:hover .input {\n    background: rgba(255, 255, 255, 0.2); }\n  .shInputSelect.openUp .dropdownWrapper {\n    bottom: calc(100% + 1px); }\n  .shInputSelect.openUp .dropdown {\n    bottom: 0; }\n  .shInputSelect.openDown .dropdownWrapper {\n    top: calc(100% + 1px); }\n  .shInputSelect.openDown .dropdown {\n    top: 0; }\n  .shInputSelect.opened.openUp .input {\n    border-top-left-radius: 0;\n    border-top-right-radius: 0; }\n  .shInputSelect.opened.openUp .dropdown {\n    border-top-left-radius: 2px;\n    border-top-right-radius: 2px; }\n  .shInputSelect.opened.openDown .input {\n    border-bottom-left-radius: 0;\n    border-bottom-right-radius: 0; }\n  .shInputSelect.opened.openDown .dropdown {\n    border-bottom-left-radius: 2px;\n    border-bottom-right-radius: 2px; }\n  .shInputSelect.opened .dropdownWrapper {\n    height: 200px; }\n  .shInputSelect .input {\n    position: absolute;\n    top: 0;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    background: rgba(255, 255, 255, 0.1);\n    border-radius: 2px;\n    line-height: 1;\n    cursor: pointer;\n    z-index: 1;\n    transition: border-radius 0.25s ease-in-out, background 0.25s ease-in-out;\n    outline: 0; }\n    .shInputSelect .input:focus {\n      -webkit-box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6);\n      box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6); }\n    .shInputSelect .input .inputSelected {\n      height: 100%;\n      line-height: 2.4;\n      padding: 0 28px 0 15px;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n    .shInputSelect .input i {\n      position: absolute;\n      top: 0;\n      right: 8px;\n      height: 100%;\n      font-size: 14px;\n      line-height: 3; }\n  .shInputSelect .dropdownWrapper {\n    position: absolute;\n    right: 0;\n    left: 0;\n    height: 0;\n    overflow: hidden;\n    transition: height 0.25s ease-in-out; }\n    .shInputSelect .dropdownWrapper .dropdown {\n      position: absolute;\n      width: 100%;\n      max-height: 200px;\n      color: rgba(0, 0, 0, 0.6);\n      background: white;\n      overflow-x: hidden;\n      overflow-y: auto;\n      z-index: 2; }\n  .shInputSelect .option {\n    padding: 10px 15px;\n    background: transparent;\n    cursor: pointer;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    transition: background 0.25s ease-in-out, color 0.25s ease-in-out; }\n    .shInputSelect .option:focus, .shInputSelect .option:hover {\n      color: white;\n      background: #3ab676;\n      outline: 0; }\n    .shInputSelect .option .optionDetails {\n      display: inline-block;\n      width: 100%;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n", ""]);
+				exports.push([module.id, "body {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: 0;\n  padding: 20px;\n  background: linear-gradient(#284D51, #304853) fixed; }\n\n.shInputSelect {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  height: 40px;\n  font-size: 16px;\n  color: rgba(255, 255, 255, 0.8); }\n  .shInputSelect:hover .input {\n    background: rgba(255, 255, 255, 0.2); }\n  .shInputSelect.openUp .dropdownWrapper {\n    bottom: calc(100% + 1px); }\n  .shInputSelect.openUp .dropdown {\n    bottom: 0; }\n  .shInputSelect.openDown .dropdownWrapper {\n    top: calc(100% + 1px); }\n  .shInputSelect.openDown .dropdown {\n    top: 0; }\n  .shInputSelect.opened.openUp .input {\n    border-top-left-radius: 0;\n    border-top-right-radius: 0; }\n  .shInputSelect.opened.openUp .dropdown {\n    border-top-left-radius: 2px;\n    border-top-right-radius: 2px; }\n  .shInputSelect.opened.openDown .input {\n    border-bottom-left-radius: 0;\n    border-bottom-right-radius: 0; }\n  .shInputSelect.opened.openDown .dropdown {\n    border-bottom-left-radius: 2px;\n    border-bottom-right-radius: 2px; }\n  .shInputSelect.opened .dropdownWrapper {\n    height: 200px; }\n  .shInputSelect .input {\n    position: absolute;\n    top: 0;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    background: rgba(255, 255, 255, 0.1);\n    border-radius: 2px;\n    line-height: 1;\n    cursor: pointer;\n    z-index: 1;\n    transition: border-radius 0.25s ease-in-out, background 0.25s ease-in-out;\n    outline: 0; }\n    .shInputSelect .input:focus {\n      -webkit-box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6);\n      box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6); }\n    .shInputSelect .input .inputSelected {\n      height: 100%;\n      line-height: 2.4;\n      padding: 0 28px 0 15px;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n    .shInputSelect .input i {\n      position: absolute;\n      top: 0;\n      right: 8px;\n      height: 100%;\n      font-size: 14px;\n      line-height: 3; }\n  .shInputSelect .dropdownWrapper {\n    position: absolute;\n    right: 0;\n    left: 0;\n    height: 0;\n    overflow: hidden;\n    transition: height 0.25s ease-in-out; }\n    .shInputSelect .dropdownWrapper .dropdown {\n      position: absolute;\n      width: 100%;\n      max-height: 200px;\n      color: rgba(0, 0, 0, 0.6);\n      background: white;\n      overflow-x: hidden;\n      overflow-y: auto;\n      z-index: 2; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-enter {\n        opacity: 0.01; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-enter.example-enter-active {\n        opacity: 1;\n        transition: opacity 500ms ease-in; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-leave {\n        opacity: 1; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-leave.example-leave-active {\n        opacity: 0.01;\n        transition: opacity 300ms ease-in; }\n  .shInputSelect .option {\n    padding: 10px 15px;\n    background: transparent;\n    cursor: pointer;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    transition: background 0.25s ease-in-out, color 0.25s ease-in-out; }\n    .shInputSelect .option:focus, .shInputSelect .option:hover {\n      color: white;\n      background: #3ab676;\n      outline: 0; }\n    .shInputSelect .option .optionDetails {\n      display: inline-block;\n      width: 100%;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n", ""]);
 	
 				// exports
 	
