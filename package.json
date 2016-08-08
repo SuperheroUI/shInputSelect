@@ -4,7 +4,9 @@
   "description": "Select input box superhero theme",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "./node_modules/.bin/webpack -d --watch --config webpack.config.js",
+    "example": "./node_modules/.bin/webpack -d --watch --config webpack.example.config.js"
   },
   "repository": {
     "type": "git",
@@ -20,7 +22,24 @@
   ],
   "author": "Kevin <kevinbatchelor@gmail.com>",
   "license": "MIT",
-  "devDependencies":{
-    "sh-core": "0.1.0"
+  "devDependencies": {
+    "babel-core": "^6.11.4",
+    "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.11.1",
+    "css-loader": "^0.23.1",
+    "file-loader": "^0.9.0",
+    "node-sass": "^3.8.0",
+    "react-hot-loader": "^1.3.0",
+    "sass-loader": "^4.0.0",
+    "style-loader": "^0.13.1",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1"
+  },
+  "dependencies": {
+    "lodash": "^4.14.1",
+    "react": "^15.3.0",
+    "react-dom": "^15.3.0",
+    "sh-core": "^0.1.2"
   }
 }
