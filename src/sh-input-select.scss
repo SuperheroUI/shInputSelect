@@ -125,6 +125,7 @@ body {
 
         .dropdown {
             position: absolute;
+            left: 100%;
             width: 100%;
             max-height: 200px;
 
@@ -134,22 +135,14 @@ body {
             overflow-y: auto;
             z-index: 2;
 
-            &.tree-enter {
-                opacity: 0.01;
+            transition: left $transition;
+
+            &.current {
+                left: 0;
             }
 
-            &.tree-enter.example-enter-active {
-                opacity: 1;
-                transition: opacity 500ms ease-in;
-            }
-
-            &.tree-leave {
-                opacity: 1;
-            }
-
-            &.tree-leave.example-leave-active {
-                opacity: 0.01;
-                transition: opacity 300ms ease-in;
+            &.left {
+                left: -100%;
             }
         }
     }

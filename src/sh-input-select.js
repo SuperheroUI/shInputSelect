@@ -38,8 +38,8 @@ class ShInputSelect extends React.Component {
             value: null,
             dropdownOpen: false,
             config: _.cloneDeep(defaultConfig),
-            treeCurrent: null,
-            treePath: []
+            treePath: [],
+            treeCurrentIndex: -1
         };
 
         this.checkDocumentEvent = this.checkDocumentEvent.bind(this);
@@ -152,7 +152,7 @@ class ShInputSelect extends React.Component {
             });
         }
 
-        let minIndex = (this.state.treeCurrent ? -1 : 0);
+        let minIndex = (this.state.treePath.length > 0 ? -1 : 0);
 
         let currentElement = null;
         if (index < minIndex) {
@@ -191,21 +191,24 @@ class ShInputSelect extends React.Component {
         return () => {
             if (this.isTree() && this.state.config.treeHasChildren(this.props.options, option)) {
                 this.refs.inputElement.focus();
-                if (this.state.treeCurrent == option) {
+                if (_.last(this.state.treePath) == option) {
                     this.setState({
-                        treeCurrent: _.last(this.state.treePath),
-                        treePath: _.dropRight(this.state.treePath)
+                        treeCurrentIndex: this.state.treeCurrentIndex - 1
                     });
+                    setTimeout(() => {
+                        this.setState({
+                            treePath: _.dropRight(this.state.treePath)
+                        });
+                    }, 550);
                 } else {
-                    var treePath = this.state.treePath;
-                    if (this.state.treeCurrent) {
-                        treePath = _.concat(treePath, this.state.treeCurrent);
-                    }
-
                     this.setState({
-                        treeCurrent: option,
-                        treePath: treePath
+                        treePath: _.concat(this.state.treePath, option)
                     });
+                    setTimeout(() => {
+                        this.setState({
+                            treeCurrentIndex: this.state.treeCurrentIndex + 1
+                        });
+                    }, 50);
                 }
             } else if (this.isMulti()) {
                 if (_.includes(this.state.value, option)) {
@@ -301,6 +304,11 @@ class ShInputSelect extends React.Component {
             opened: this.state.dropdownOpen
         };
 
+        if (this.refs.mainElement && (window.innerHeight - this.refs.mainElement.getBoundingClientRect().bottom < 300)) {
+            mainClasses.openDown = false;
+            mainClasses.openUp = true;
+        }
+
         let inputSelected = 'Select';
         if (this.isMulti()) {
             if (this.state.value.length === 0) {
@@ -322,66 +330,92 @@ class ShInputSelect extends React.Component {
             </div>
         );
 
-        let preOptions = this.props.options;
-        if (this.isTree()) {
-            preOptions = this.state.config.treeGetChildren(preOptions, this.state.treeCurrent);
-        }
-
-        let options = preOptions.map((current, index) => {
-            let showSelected = null;
-            if (this.isMulti()) {
-                if (_.includes(this.state.value, current)) {
-                    showSelected = <i className="icon-checkboxChecked">X</i>
-                } else {
-                    showSelected = <i className="icon-checkboxEmpty">O</i>
-                }
-            }
-
-            let showTree = null;
+        let generateOptions = (parentOption) => {
+            let preOptions = this.props.options;
             if (this.isTree()) {
-                if (this.state.config.treeHasChildren(this.props.options, current)) {
-                    showTree = <i className="icon-chevronRight">&gt;</i>
-                }
+                preOptions = this.state.config.treeGetChildren(preOptions, parentOption);
             }
 
-            return (
-                <div key={index} className="option" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)}>
-                    {showSelected}
-                    <div className="optionDetails">{this.getDisplay(current)}</div>
-                    {showTree}
-                </div>
-            );
-        });
+            return preOptions.map((current, index) => {
+                let showSelected = null;
+                if (this.isMulti()) {
+                    if (_.includes(this.state.value, current)) {
+                        showSelected = <i className="icon-checkboxChecked">X</i>
+                    } else {
+                        showSelected = <i className="icon-checkboxEmpty">O</i>
+                    }
+                }
 
-        let treeBack = null;
-        if (this.isTree() && this.state.treeCurrent) {
-            treeBack = (
-                <div key="back" className="option back" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(this.state.treeCurrent)} onKeyUp={this.optionKeyUp(this.state.treeCurrent, -1)}>
-                    <i className="icon-chevronLeft">&lt;</i>
-                    <div className="optionDetails">{this.getDisplay(this.state.treeCurrent)}</div>
-                </div>
-            )
-        }
+                let showTree = null;
+                if (this.isTree()) {
+                    if (this.state.config.treeHasChildren(this.props.options, current)) {
+                        showTree = <i className="icon-chevronRight">&gt;</i>
+                    }
+                }
 
-        let dropdownClasses = {
-            dropdown: true,
-            multi: this.isMulti(),
-            tree: this.isTree()
+                return (
+                    <div key={index} className="option" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)}>
+                        {showSelected}
+                        <div className="optionDetails">{this.getDisplay(current)}</div>
+                        {showTree}
+                    </div>
+                );
+            });
         };
 
-        let dropdown = (
-            <div className="dropdownWrapper">
-                <div className={utilClasses.getClassNames(dropdownClasses)} ref="dropdownElement">
-                    {treeBack}
-                    {options}
+        let generateDropdownClasses = (index) => {
+            return utilClasses.getClassNames({
+                dropdown: true,
+                multi: this.isMulti(),
+                tree: this.isTree(),
+                left: index < this.state.treeCurrentIndex,
+                current: index === this.state.treeCurrentIndex,
+                right: index > this.state.treeCurrentIndex
+            });
+        };
+
+        let dropdownPages = [];
+        if (this.isTree()) {
+            dropdownPages.push(
+                <div key="dropdown-main" className={generateDropdownClasses(-1)} ref="dropdownElement">
+                    {generateOptions(null)}
                 </div>
+            );
+
+            for (let i = 0; i < this.state.treePath.length; i++) {
+                let parentOption = this.state.treePath[i];
+                let treeBack = (
+                    <div key="back" className="option back" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)}>
+                        <i className="icon-chevronLeft">&lt;</i>
+                        <div className="optionDetails">{this.getDisplay(parentOption)}</div>
+                    </div>
+                );
+
+                dropdownPages.push(
+                    <div key={'dropdown-' + i} className={generateDropdownClasses(i)} ref="dropdownElement">
+                        {treeBack}
+                        {generateOptions(parentOption)}
+                    </div>
+                );
+            }
+        } else {
+            dropdownPages.push(
+                <div key="dropdown-main" className={generateDropdownClasses(-1)} ref="dropdownElement">
+                    {generateOptions(null)}
+                </div>
+            );
+        }
+
+        let dropdownWrapper = (
+            <div className="dropdownWrapper">
+                {dropdownPages}
             </div>
         );
 
         return (
             <div ref="mainElement" className={utilClasses.getClassNames(mainClasses)}>
                 {input}
-                {dropdown}
+                {dropdownWrapper}
             </div>
         );
     }

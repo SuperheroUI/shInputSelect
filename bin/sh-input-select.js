@@ -155,8 +155,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            value: null,
 	            dropdownOpen: false,
 	            config: _.cloneDeep(defaultConfig),
-	            treeCurrent: null,
-	            treePath: []
+	            treePath: [],
+	            treeCurrentIndex: -1
 	        };
 	
 	        _this.checkDocumentEvent = _this.checkDocumentEvent.bind(_this);
@@ -298,7 +298,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                });
 	            }
 	
-	            var minIndex = this.state.treeCurrent ? -1 : 0;
+	            var minIndex = this.state.treePath.length > 0 ? -1 : 0;
 	
 	            var currentElement = null;
 	            if (index < minIndex) {
@@ -342,21 +342,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return function () {
 	                if (_this4.isTree() && _this4.state.config.treeHasChildren(_this4.props.options, option)) {
 	                    _this4.refs.inputElement.focus();
-	                    if (_this4.state.treeCurrent == option) {
+	                    if (_.last(_this4.state.treePath) == option) {
 	                        _this4.setState({
-	                            treeCurrent: _.last(_this4.state.treePath),
-	                            treePath: _.dropRight(_this4.state.treePath)
+	                            treeCurrentIndex: _this4.state.treeCurrentIndex - 1
 	                        });
+	                        setTimeout(function () {
+	                            _this4.setState({
+	                                treePath: _.dropRight(_this4.state.treePath)
+	                            });
+	                        }, 550);
 	                    } else {
-	                        var treePath = _this4.state.treePath;
-	                        if (_this4.state.treeCurrent) {
-	                            treePath = _.concat(treePath, _this4.state.treeCurrent);
-	                        }
-	
 	                        _this4.setState({
-	                            treeCurrent: option,
-	                            treePath: treePath
+	                            treePath: _.concat(_this4.state.treePath, option)
 	                        });
+	                        setTimeout(function () {
+	                            _this4.setState({
+	                                treeCurrentIndex: _this4.state.treeCurrentIndex + 1
+	                            });
+	                        }, 50);
 	                    }
 	                } else if (_this4.isMulti()) {
 	                    if (_.includes(_this4.state.value, option)) {
@@ -466,6 +469,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                opened: this.state.dropdownOpen
 	            };
 	
+	            if (this.refs.mainElement && window.innerHeight - this.refs.mainElement.getBoundingClientRect().bottom < 300) {
+	                mainClasses.openDown = false;
+	                mainClasses.openUp = true;
+	            }
+	
 	            var inputSelected = 'Select';
 	            if (this.isMulti()) {
 	                if (this.state.value.length === 0) {
@@ -495,93 +503,117 @@ return /******/ (function(modules) { // webpackBootstrap
 	                )
 	            );
 	
-	            var preOptions = this.props.options;
-	            if (this.isTree()) {
-	                preOptions = this.state.config.treeGetChildren(preOptions, this.state.treeCurrent);
-	            }
-	
-	            var options = preOptions.map(function (current, index) {
-	                var showSelected = null;
-	                if (_this5.isMulti()) {
-	                    if (_.includes(_this5.state.value, current)) {
-	                        showSelected = _react2.default.createElement(
-	                            'i',
-	                            { className: 'icon-checkboxChecked' },
-	                            'X'
-	                        );
-	                    } else {
-	                        showSelected = _react2.default.createElement(
-	                            'i',
-	                            { className: 'icon-checkboxEmpty' },
-	                            'O'
-	                        );
-	                    }
-	                }
-	
-	                var showTree = null;
+	            var generateOptions = function generateOptions(parentOption) {
+	                var preOptions = _this5.props.options;
 	                if (_this5.isTree()) {
-	                    if (_this5.state.config.treeHasChildren(_this5.props.options, current)) {
-	                        showTree = _react2.default.createElement(
-	                            'i',
-	                            { className: 'icon-chevronRight' },
-	                            '>'
-	                        );
-	                    }
+	                    preOptions = _this5.state.config.treeGetChildren(preOptions, parentOption);
 	                }
 	
-	                return _react2.default.createElement(
-	                    'div',
-	                    { key: index, className: 'option', tabIndex: _this5.state.dropdownOpen ? 0 : -1, onClick: _this5.optionSelect(current), onKeyUp: _this5.optionKeyUp(current, index) },
-	                    showSelected,
-	                    _react2.default.createElement(
-	                        'div',
-	                        { className: 'optionDetails' },
-	                        _this5.getDisplay(current)
-	                    ),
-	                    showTree
-	                );
-	            });
+	                return preOptions.map(function (current, index) {
+	                    var showSelected = null;
+	                    if (_this5.isMulti()) {
+	                        if (_.includes(_this5.state.value, current)) {
+	                            showSelected = _react2.default.createElement(
+	                                'i',
+	                                { className: 'icon-checkboxChecked' },
+	                                'X'
+	                            );
+	                        } else {
+	                            showSelected = _react2.default.createElement(
+	                                'i',
+	                                { className: 'icon-checkboxEmpty' },
+	                                'O'
+	                            );
+	                        }
+	                    }
 	
-	            var treeBack = null;
-	            if (this.isTree() && this.state.treeCurrent) {
-	                treeBack = _react2.default.createElement(
-	                    'div',
-	                    { key: 'back', className: 'option back', tabIndex: this.state.dropdownOpen ? 0 : -1, onClick: this.optionSelect(this.state.treeCurrent), onKeyUp: this.optionKeyUp(this.state.treeCurrent, -1) },
-	                    _react2.default.createElement(
-	                        'i',
-	                        { className: 'icon-chevronLeft' },
-	                        '<'
-	                    ),
-	                    _react2.default.createElement(
-	                        'div',
-	                        { className: 'optionDetails' },
-	                        this.getDisplay(this.state.treeCurrent)
-	                    )
-	                );
-	            }
+	                    var showTree = null;
+	                    if (_this5.isTree()) {
+	                        if (_this5.state.config.treeHasChildren(_this5.props.options, current)) {
+	                            showTree = _react2.default.createElement(
+	                                'i',
+	                                { className: 'icon-chevronRight' },
+	                                '>'
+	                            );
+	                        }
+	                    }
 	
-	            var dropdownClasses = {
-	                dropdown: true,
-	                multi: this.isMulti(),
-	                tree: this.isTree()
+	                    return _react2.default.createElement(
+	                        'div',
+	                        { key: index, className: 'option', tabIndex: _this5.state.dropdownOpen ? 0 : -1, onClick: _this5.optionSelect(current), onKeyUp: _this5.optionKeyUp(current, index) },
+	                        showSelected,
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'optionDetails' },
+	                            _this5.getDisplay(current)
+	                        ),
+	                        showTree
+	                    );
+	                });
 	            };
 	
-	            var dropdown = _react2.default.createElement(
+	            var generateDropdownClasses = function generateDropdownClasses(index) {
+	                return _utilClassesService2.default.getClassNames({
+	                    dropdown: true,
+	                    multi: _this5.isMulti(),
+	                    tree: _this5.isTree(),
+	                    left: index < _this5.state.treeCurrentIndex,
+	                    current: index === _this5.state.treeCurrentIndex,
+	                    right: index > _this5.state.treeCurrentIndex
+	                });
+	            };
+	
+	            var dropdownPages = [];
+	            if (this.isTree()) {
+	                dropdownPages.push(_react2.default.createElement(
+	                    'div',
+	                    { key: 'dropdown-main', className: generateDropdownClasses(-1), ref: 'dropdownElement' },
+	                    generateOptions(null)
+	                ));
+	
+	                for (var i = 0; i < this.state.treePath.length; i++) {
+	                    var parentOption = this.state.treePath[i];
+	                    var treeBack = _react2.default.createElement(
+	                        'div',
+	                        { key: 'back', className: 'option back', tabIndex: this.state.dropdownOpen ? 0 : -1, onClick: this.optionSelect(parentOption), onKeyUp: this.optionKeyUp(parentOption, -1) },
+	                        _react2.default.createElement(
+	                            'i',
+	                            { className: 'icon-chevronLeft' },
+	                            '<'
+	                        ),
+	                        _react2.default.createElement(
+	                            'div',
+	                            { className: 'optionDetails' },
+	                            this.getDisplay(parentOption)
+	                        )
+	                    );
+	
+	                    dropdownPages.push(_react2.default.createElement(
+	                        'div',
+	                        { key: 'dropdown-' + i, className: generateDropdownClasses(i), ref: 'dropdownElement' },
+	                        treeBack,
+	                        generateOptions(parentOption)
+	                    ));
+	                }
+	            } else {
+	                dropdownPages.push(_react2.default.createElement(
+	                    'div',
+	                    { key: 'dropdown-main', className: generateDropdownClasses(-1), ref: 'dropdownElement' },
+	                    generateOptions(null)
+	                ));
+	            }
+	
+	            var dropdownWrapper = _react2.default.createElement(
 	                'div',
 	                { className: 'dropdownWrapper' },
-	                _react2.default.createElement(
-	                    'div',
-	                    { className: _utilClassesService2.default.getClassNames(dropdownClasses), ref: 'dropdownElement' },
-	                    treeBack,
-	                    options
-	                )
+	                dropdownPages
 	            );
 	
 	            return _react2.default.createElement(
 	                'div',
 	                { ref: 'mainElement', className: _utilClassesService2.default.getClassNames(mainClasses) },
 	                input,
-	                dropdown
+	                dropdownWrapper
 	            );
 	        }
 	    }]);
@@ -700,7 +732,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	// module
-	exports.push([module.id, "body {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: 0;\n  padding: 20px;\n  background: linear-gradient(#284D51, #304853) fixed; }\n\n.shInputSelect {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  height: 40px;\n  font-size: 16px;\n  color: rgba(255, 255, 255, 0.8); }\n  .shInputSelect:hover .input {\n    background: rgba(255, 255, 255, 0.2); }\n  .shInputSelect.openUp .dropdownWrapper {\n    bottom: calc(100% + 1px); }\n  .shInputSelect.openUp .dropdown {\n    bottom: 0; }\n  .shInputSelect.openDown .dropdownWrapper {\n    top: calc(100% + 1px); }\n  .shInputSelect.openDown .dropdown {\n    top: 0; }\n  .shInputSelect.opened.openUp .input {\n    border-top-left-radius: 0;\n    border-top-right-radius: 0; }\n  .shInputSelect.opened.openUp .dropdown {\n    border-top-left-radius: 2px;\n    border-top-right-radius: 2px; }\n  .shInputSelect.opened.openDown .input {\n    border-bottom-left-radius: 0;\n    border-bottom-right-radius: 0; }\n  .shInputSelect.opened.openDown .dropdown {\n    border-bottom-left-radius: 2px;\n    border-bottom-right-radius: 2px; }\n  .shInputSelect.opened .dropdownWrapper {\n    height: 200px; }\n  .shInputSelect .input {\n    position: absolute;\n    top: 0;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    background: rgba(255, 255, 255, 0.1);\n    border-radius: 2px;\n    line-height: 1;\n    cursor: pointer;\n    z-index: 1;\n    transition: border-radius 0.25s ease-in-out, background 0.25s ease-in-out;\n    outline: 0; }\n    .shInputSelect .input:focus {\n      -webkit-box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6);\n      box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6); }\n    .shInputSelect .input .inputSelected {\n      height: 100%;\n      line-height: 2.4;\n      padding: 0 28px 0 15px;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n    .shInputSelect .input i {\n      position: absolute;\n      top: 0;\n      right: 8px;\n      height: 100%;\n      font-size: 14px;\n      line-height: 3; }\n  .shInputSelect .dropdownWrapper {\n    position: absolute;\n    right: 0;\n    left: 0;\n    height: 0;\n    overflow: hidden;\n    transition: height 0.25s ease-in-out; }\n    .shInputSelect .dropdownWrapper .dropdown {\n      position: absolute;\n      width: 100%;\n      max-height: 200px;\n      color: rgba(0, 0, 0, 0.6);\n      background: white;\n      overflow-x: hidden;\n      overflow-y: auto;\n      z-index: 2; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-enter {\n        opacity: 0.01; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-enter.example-enter-active {\n        opacity: 1;\n        transition: opacity 500ms ease-in; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-leave {\n        opacity: 1; }\n      .shInputSelect .dropdownWrapper .dropdown.tree-leave.example-leave-active {\n        opacity: 0.01;\n        transition: opacity 300ms ease-in; }\n  .shInputSelect .option {\n    padding: 10px 15px;\n    background: transparent;\n    cursor: pointer;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    transition: background 0.25s ease-in-out, color 0.25s ease-in-out; }\n    .shInputSelect .option:focus, .shInputSelect .option:hover {\n      color: white;\n      background: #3ab676;\n      outline: 0; }\n    .shInputSelect .option .optionDetails {\n      display: inline-block;\n      width: 100%;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n", ""]);
+	exports.push([module.id, "body {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: 0;\n  padding: 20px;\n  background: linear-gradient(#284D51, #304853) fixed; }\n\n.shInputSelect {\n  position: relative;\n  display: inline-block;\n  width: 100%;\n  height: 40px;\n  font-size: 16px;\n  color: rgba(255, 255, 255, 0.8); }\n  .shInputSelect:hover .input {\n    background: rgba(255, 255, 255, 0.2); }\n  .shInputSelect.openUp .dropdownWrapper {\n    bottom: calc(100% + 1px); }\n  .shInputSelect.openUp .dropdown {\n    bottom: 0; }\n  .shInputSelect.openDown .dropdownWrapper {\n    top: calc(100% + 1px); }\n  .shInputSelect.openDown .dropdown {\n    top: 0; }\n  .shInputSelect.opened.openUp .input {\n    border-top-left-radius: 0;\n    border-top-right-radius: 0; }\n  .shInputSelect.opened.openUp .dropdown {\n    border-top-left-radius: 2px;\n    border-top-right-radius: 2px; }\n  .shInputSelect.opened.openDown .input {\n    border-bottom-left-radius: 0;\n    border-bottom-right-radius: 0; }\n  .shInputSelect.opened.openDown .dropdown {\n    border-bottom-left-radius: 2px;\n    border-bottom-right-radius: 2px; }\n  .shInputSelect.opened .dropdownWrapper {\n    height: 200px; }\n  .shInputSelect .input {\n    position: absolute;\n    top: 0;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    background: rgba(255, 255, 255, 0.1);\n    border-radius: 2px;\n    line-height: 1;\n    cursor: pointer;\n    z-index: 1;\n    transition: border-radius 0.25s ease-in-out, background 0.25s ease-in-out;\n    outline: 0; }\n    .shInputSelect .input:focus {\n      -webkit-box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6);\n      box-shadow: inset 0 1px 1px transparent, 0 0 5px rgba(255, 255, 255, 0.6); }\n    .shInputSelect .input .inputSelected {\n      height: 100%;\n      line-height: 2.4;\n      padding: 0 28px 0 15px;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n    .shInputSelect .input i {\n      position: absolute;\n      top: 0;\n      right: 8px;\n      height: 100%;\n      font-size: 14px;\n      line-height: 3; }\n  .shInputSelect .dropdownWrapper {\n    position: absolute;\n    right: 0;\n    left: 0;\n    height: 0;\n    overflow: hidden;\n    transition: height 0.25s ease-in-out; }\n    .shInputSelect .dropdownWrapper .dropdown {\n      position: absolute;\n      left: 100%;\n      width: 100%;\n      max-height: 200px;\n      color: rgba(0, 0, 0, 0.6);\n      background: white;\n      overflow-x: hidden;\n      overflow-y: auto;\n      z-index: 2;\n      transition: left 0.5s ease-in-out; }\n      .shInputSelect .dropdownWrapper .dropdown.current {\n        left: 0; }\n      .shInputSelect .dropdownWrapper .dropdown.left {\n        left: -100%; }\n  .shInputSelect .option {\n    padding: 10px 15px;\n    background: transparent;\n    cursor: pointer;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    transition: background 0.25s ease-in-out, color 0.25s ease-in-out; }\n    .shInputSelect .option:focus, .shInputSelect .option:hover {\n      color: white;\n      background: #3ab676;\n      outline: 0; }\n    .shInputSelect .option .optionDetails {\n      display: inline-block;\n      width: 100%;\n      white-space: nowrap;\n      overflow: hidden;\n      text-overflow: ellipsis; }\n", ""]);
 	
 	// exports
 
