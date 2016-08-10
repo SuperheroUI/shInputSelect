@@ -1,6 +1,6 @@
 {
   "name": "sh-input-select",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Select input box superhero theme",
   "main": "index.js",
   "scripts": {
