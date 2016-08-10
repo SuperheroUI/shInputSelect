@@ -2,7 +2,7 @@
   "name": "sh-input-select",
   "version": "0.1.1",
   "description": "Select input box superhero theme",
-  "main": "index.js",
+  "main": "bin/sh-input-select.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "./node_modules/.bin/webpack -d --watch --config webpack.config.js",
