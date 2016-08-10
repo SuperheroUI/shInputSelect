@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 
 import ShInputSelect from '../bin/sh-input-select';
 
+require('./app.scss');
+
 var config2 = {
     getDisplay: (option) => {
         return option.name + ' - ' + option.desc;
