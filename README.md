@@ -1,2 +1,18 @@
-# shInputSelect
-React component for creating a select field for SuperheroUI
+# SuperheroUI
+InsideSales.com React UI
+
+## ShInputSelect
+
+### Website (For examples, limits, and usage)
+https://superheroui.github.io/
+
+### Installation
+Use npm to install the module
+```sh
+npm install sh-input-select --save
+```
+
+Now you can import it into your project
+```js
+import ShInputSelect from 'sh-input-select';
+```
