@@ -1,6 +1,12 @@
 import React from 'react';
 import * as _ from 'lodash';
+
 import utilClasses from './util-classes.service.js';
+import IconChevronDown from './icons/icon-chevron-down';
+import IconChevronLeft from './icons/icon-chevron-left';
+import IconChevronRight from './icons/icon-chevron-right';
+import IconCheckboxUnselected from './icons/icon-checkbox-unselected';
+import IconCheckboxSelected from './icons/icon-checkbox-selected';
 
 require('./sh-input-select.scss');
 
@@ -326,7 +332,7 @@ class ShInputSelect extends React.Component {
         let input = (
             <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp}>
                 <div className="inputSelected">{inputSelected}</div>
-                <i className="icon-chevronDown">V</i>
+                <IconChevronDown />
             </div>
         );
 
@@ -340,16 +346,16 @@ class ShInputSelect extends React.Component {
                 let showSelected = null;
                 if (this.isMulti()) {
                     if (_.includes(this.state.value, current)) {
-                        showSelected = <i className="icon-checkboxChecked">X</i>
+                        showSelected = <IconCheckboxSelected />
                     } else {
-                        showSelected = <i className="icon-checkboxEmpty">O</i>
+                        showSelected = <IconCheckboxUnselected />
                     }
                 }
 
                 let showTree = null;
                 if (this.isTree()) {
                     if (this.state.config.treeHasChildren(this.props.options, current)) {
-                        showTree = <i className="icon-chevronRight">&gt;</i>
+                        showTree = <div className="treeForwardIcon"><IconChevronRight /></div>
                     }
                 }
 
@@ -386,7 +392,7 @@ class ShInputSelect extends React.Component {
                 let parentOption = this.state.treePath[i];
                 let treeBack = (
                     <div key="back" className="option back" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)}>
-                        <i className="icon-chevronLeft">&lt;</i>
+                        <div className="treeBackIcon"><IconChevronLeft /></div>
                         <div className="optionDetails">{this.getDisplay(parentOption)}</div>
                     </div>
                 );

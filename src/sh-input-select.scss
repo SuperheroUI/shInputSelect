@@ -90,14 +90,10 @@
             @include ellipsis;
         }
 
-        i {
+        .icon-svg {
             position: absolute;
-            top: 0;
+            top: 8px;
             right: 8px;
-            height: 100%;
-
-            font-size: $size-font;
-            line-height: 3;
         }
     }
 
@@ -132,13 +128,19 @@
             &.left {
                 left: -100%;
             }
+
+            .icon-svg {
+                fill: $color-dark-line2;
+            }
         }
     }
 
     .option {
+        position: relative;
         padding: 10px 15px;
 
         background: transparent;
+        line-height: 1;
         cursor: pointer;
         @include ellipsis;
 
@@ -149,6 +151,14 @@
             color: $color-font;
             background: $color-primary;
             outline: 0;
+
+            .icon-svg {
+                fill: $color-line1;
+            }
+        }
+
+        &.back {
+            text-align: center;
         }
 
         .optionDetails {
@@ -157,6 +167,25 @@
 
             @include ellipsis;
         }
+
+        .treeForwardIcon {
+            position: absolute;
+            top: 7px;
+            right: 0;
+        }
+
+        .treeBackIcon {
+            position: absolute;
+            top: 7px;
+            left: 5px;
+        }
+    }
+
+    .icon-svg {
+        fill: $color-line1;
+        vertical-align: bottom;
+
+        transition: fill $transition-hover;
     }
 
 }
