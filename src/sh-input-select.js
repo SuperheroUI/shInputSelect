@@ -33,6 +33,14 @@ let defaultConfig = {
     }
 };
 
+let hotKeys = {
+    esc: 27,
+    space: 32,
+    up: 38,
+    down: 40,
+};
+hotKeys.list = _.values(hotKeys);
+
 class ShInputSelect extends React.Component {
     /** @namespace this.refs.inputElement */
     /** @namespace this.refs.dropdownElement */
@@ -43,6 +51,7 @@ class ShInputSelect extends React.Component {
         this.state = {
             value: null,
             dropdownOpen: false,
+            dropdownDirection: 'down',
             config: _.cloneDeep(defaultConfig),
             treePath: [],
             treeCurrentIndex: -1
@@ -80,9 +89,7 @@ class ShInputSelect extends React.Component {
 
     checkDocumentEvent(event) {
         if (this.state.dropdownOpen && !_.includes(event.path, this.refs.mainElement)) {
-            this.setState({
-                dropdownOpen: false
-            });
+            this.closeDropdown();
         }
     }
 
@@ -103,40 +110,71 @@ class ShInputSelect extends React.Component {
     }
 
     inputKeyUp(event) {
+        if (_.includes(hotKeys, event.keyCode)) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
         switch (event.keyCode) {
-            case 32: { // Space
+            case hotKeys.space: {
                 this.toggleDropdown();
                 break;
             }
-            case 27: { // Esc
-                this.setState({
-                    dropdownOpen: false
-                });
+            case hotKeys.esc: {
+                this.closeDropdown();
                 break;
             }
-            case 40: { // Down Arrow
+            case hotKeys.down: {
                 this.navigateTab(-1, -2);
             }
         }
     }
 
+    inputKeyDown(event) {
+        if (_.includes(hotKeys, event.keyCode)) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
+
     toggleDropdown() {
+        if (this.state.dropdownOpen) {
+            this.closeDropdown();
+        } else {
+            this.openDropdown();
+        }
+    }
+
+    closeDropdown() {
         this.setState({
-            dropdownOpen: !this.state.dropdownOpen
+            dropdownOpen: false
+        });
+    }
+
+    openDropdown() {
+        let dropdownDirection = 'down';
+        if (this.refs.mainElement && (window.innerHeight - this.refs.mainElement.getBoundingClientRect().bottom < 300)) {
+            dropdownDirection = 'up';
+        }
+
+        this.setState({
+            dropdownOpen: true,
+            dropdownDirection: dropdownDirection
         });
     }
 
     optionKeyUp(option, index) {
         return (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+
             switch (event.keyCode) {
                 case 32: { // Space
                     this.optionSelect(option)();
                     break;
                 }
                 case 27: { // Esc
-                    this.setState({
-                        dropdownOpen: false
-                    });
+                    this.closeDropdown();
                     break;
                 }
                 case 38: { // Up Arrow
@@ -151,11 +189,17 @@ class ShInputSelect extends React.Component {
         }
     }
 
+    optionKeyDown(event) {
+        console.log('event', event);
+        if (_.includes(hotKeys, event.keyCode)) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
+
     navigateTab(direction, index) {
         if (!this.state.dropdownOpen) {
-            this.setState({
-                dropdownOpen: true
-            });
+            this.openDropdown();
         }
 
         let minIndex = (this.state.treePath.length > 0 ? -1 : 0);
@@ -242,8 +286,8 @@ class ShInputSelect extends React.Component {
                     this.props.onChange(newValue);
                 }
 
+                this.closeDropdown();
                 this.setState({
-                    dropdownOpen: false,
                     value: newValue
                 });
             }
@@ -304,16 +348,11 @@ class ShInputSelect extends React.Component {
     render() {
         let mainClasses = {
             shInputSelect: true,
-            openDown: true,
-            openUp: false,
+            openDown: this.state.dropdownDirection === 'down',
+            openUp: this.state.dropdownDirection !== 'down',
             closed: !this.state.dropdownOpen,
             opened: this.state.dropdownOpen
         };
-
-        if (this.refs.mainElement && (window.innerHeight - this.refs.mainElement.getBoundingClientRect().bottom < 300)) {
-            mainClasses.openDown = false;
-            mainClasses.openUp = true;
-        }
 
         let inputSelected = 'Select';
         if (this.isMulti()) {
@@ -330,7 +369,7 @@ class ShInputSelect extends React.Component {
             inputSelected = this.getDisplay(this.state.value);
         }
         let input = (
-            <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp}>
+            <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp} onKeyDown={this.inputKeyDown}>
                 <div className="inputSelected">{inputSelected}</div>
                 <IconChevronDown />
             </div>
@@ -360,7 +399,7 @@ class ShInputSelect extends React.Component {
                 }
 
                 return (
-                    <div key={index} className="option" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)}>
+                    <div key={index} className="option" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)} onKeyDown={this.optionKeyDown}>
                         {showSelected}
                         <div className="optionDetails">{this.getDisplay(current)}</div>
                         {showTree}
@@ -391,7 +430,7 @@ class ShInputSelect extends React.Component {
             for (let i = 0; i < this.state.treePath.length; i++) {
                 let parentOption = this.state.treePath[i];
                 let treeBack = (
-                    <div key="back" className="option back" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)}>
+                    <div key="back" className="option back" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)} onKeyDown={this.optionKeyDown}>
                         <div className="treeBackIcon"><IconChevronLeft /></div>
                         <div className="optionDetails">{this.getDisplay(parentOption)}</div>
                     </div>
