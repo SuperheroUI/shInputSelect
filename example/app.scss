@@ -7,7 +7,15 @@ body {
     left: 0;
     right: 0;
     margin: 0;
-    padding: 20px;
 
     background: linear-gradient($color-secondary, $color-thirdary) fixed;
+}
+
+#app {
+    height: 100%;
+    width: 100%;
+    padding: 20px;
+
+    box-sizing: border-box;
+    overflow: auto;
 }
