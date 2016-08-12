@@ -85,13 +85,12 @@ class App extends React.Component {
                 <div style={{width: '200px'}}>
                     <ShInputSelect value={this.state.value1} options={this.options} onChange={this.handleChange1} />
                 </div>
-                <div style={{width: '400px', height: '1000px'}}>
+                <div style={{width: '400px'}}>
                     <ShInputSelect value={this.state.value2} options={this.options} onChange={this.handleChange2} config={config2} />
                 </div>
-                <div style={{width: '300px', height: '1000px'}}>
+                <div style={{width: '300px'}}>
                     <ShInputSelect value={this.state.value3} options={this.options3} onChange={this.handleChange3} config={config3} />
                 </div>
-                hello
             </div>
         );
     }
