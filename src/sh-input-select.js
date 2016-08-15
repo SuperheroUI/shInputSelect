@@ -190,7 +190,6 @@ class ShInputSelect extends React.Component {
     }
 
     optionKeyDown(event) {
-        console.log('event', event);
         if (_.includes(hotKeys, event.keyCode)) {
             event.preventDefault();
             event.stopPropagation();
@@ -346,6 +345,14 @@ class ShInputSelect extends React.Component {
     }
 
     render() {
+        //noinspection JSUnusedLocalSymbols
+        let {value,
+            options,
+            onChange,
+            config,
+            ...other
+        } = this.props;
+
         let mainClasses = {
             shInputSelect: true,
             openDown: this.state.dropdownDirection === 'down',
@@ -375,7 +382,7 @@ class ShInputSelect extends React.Component {
             </div>
         );
 
-        let generateOptions = (parentOption) => {
+        let generateOptions = (tabable, parentOption) => {
             let preOptions = this.props.options;
             if (this.isTree()) {
                 preOptions = this.state.config.treeGetChildren(preOptions, parentOption);
@@ -399,7 +406,7 @@ class ShInputSelect extends React.Component {
                 }
 
                 return (
-                    <div key={index} className="option" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)} onKeyDown={this.optionKeyDown}>
+                    <div key={index} className="option" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)} onKeyDown={this.optionKeyDown}>
                         {showSelected}
                         <div className="optionDetails">{this.getDisplay(current)}</div>
                         {showTree}
@@ -423,14 +430,15 @@ class ShInputSelect extends React.Component {
         if (this.isTree()) {
             dropdownPages.push(
                 <div key="dropdown-main" className={generateDropdownClasses(-1)} ref="dropdownElement">
-                    {generateOptions(null)}
+                    {generateOptions(this.state.treePath.length === 0)}
                 </div>
             );
 
             for (let i = 0; i < this.state.treePath.length; i++) {
                 let parentOption = this.state.treePath[i];
+                let tabable = this.state.treePath.length - 1 === i;
                 let treeBack = (
-                    <div key="back" className="option back" tabIndex={this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)} onKeyDown={this.optionKeyDown}>
+                    <div key="back" className="option back" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)} onKeyDown={this.optionKeyDown}>
                         <div className="treeBackIcon"><IconChevronLeft /></div>
                         <div className="optionDetails">{this.getDisplay(parentOption)}</div>
                     </div>
@@ -439,14 +447,14 @@ class ShInputSelect extends React.Component {
                 dropdownPages.push(
                     <div key={'dropdown-' + i} className={generateDropdownClasses(i)} ref="dropdownElement">
                         {treeBack}
-                        {generateOptions(parentOption)}
+                        {generateOptions(tabable, parentOption)}
                     </div>
                 );
             }
         } else {
             dropdownPages.push(
                 <div key="dropdown-main" className={generateDropdownClasses(-1)} ref="dropdownElement">
-                    {generateOptions(null)}
+                    {generateOptions(true)}
                 </div>
             );
         }
@@ -458,7 +466,7 @@ class ShInputSelect extends React.Component {
         );
 
         return (
-            <div ref="mainElement" className={utilClasses.getClassNames(mainClasses)}>
+            <div ref="mainElement" {...other} className={utilClasses.getClassNames(mainClasses)}>
                 {input}
                 {dropdownWrapper}
             </div>
