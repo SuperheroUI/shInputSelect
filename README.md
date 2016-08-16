@@ -1,4 +1,4 @@
-# SuperheroUI
+# SuperheroUI [![Build Status](https://travis-ci.org/SuperheroUI/shInputSelect.svg?branch=master)](https://travis-ci.org/SuperheroUI/shInputSelect)
 InsideSales.com React UI
 
 ## ShInputSelect
