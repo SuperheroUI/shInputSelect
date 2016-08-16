@@ -205,9 +205,9 @@ class ShInputSelect extends React.Component {
 
         let currentElement = null;
         if (index < minIndex) {
-            currentElement = this.refs.dropdownElement.lastElementChild;
+            currentElement = this.refs.dropdownElement.lastElementChild.lastElementChild;
         } else {
-            currentElement = this.refs.dropdownElement.children[index + (-1 * minIndex)];
+            currentElement = this.refs.dropdownElement.lastElementChild.children[index + (-1 * minIndex)];
         }
 
         let nextElement = null;
@@ -429,7 +429,7 @@ class ShInputSelect extends React.Component {
         let dropdownPages = [];
         if (this.isTree()) {
             dropdownPages.push(
-                <div key="dropdown-main" className={generateDropdownClasses(-1)} ref="dropdownElement">
+                <div key="dropdown-main" className={generateDropdownClasses(-1)}>
                     {generateOptions(this.state.treePath.length === 0)}
                 </div>
             );
@@ -445,7 +445,7 @@ class ShInputSelect extends React.Component {
                 );
 
                 dropdownPages.push(
-                    <div key={'dropdown-' + i} className={generateDropdownClasses(i)} ref="dropdownElement">
+                    <div key={'dropdown-' + i} className={generateDropdownClasses(i)}>
                         {treeBack}
                         {generateOptions(tabable, parentOption)}
                     </div>
@@ -453,14 +453,14 @@ class ShInputSelect extends React.Component {
             }
         } else {
             dropdownPages.push(
-                <div key="dropdown-main" className={generateDropdownClasses(-1)} ref="dropdownElement">
+                <div key="dropdown-main" className={generateDropdownClasses(-1)}>
                     {generateOptions(true)}
                 </div>
             );
         }
 
         let dropdownWrapper = (
-            <div className="dropdownWrapper">
+            <div className="dropdownWrapper" ref="dropdownElement">
                 {dropdownPages}
             </div>
         );
