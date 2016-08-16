@@ -1,54 +1,53 @@
+var path = require('path');
 var webpack = require('webpack');
 
 module.exports = function(config) {
     config.set({
-        browsers: [ 'Chrome' ], //run in Chrome
-        singleRun: true, //just run once by default
-        frameworks:[ 'mocha', 'chai' ],
-        files: [
-            './src/index.spec.js' //just load this file
-        ],
-        plugins: [
-            'karma-chrome-launcher',
-            'karma-chai',
-            'karma-mocha',
-            'karma-sourcemap-loader',
-            'karma-webpack',
-            'karma-coverage',
-            'karma-mocha-reporter'
-        ],
+        browsers: [ 'PhantomJS' ],
+        singleRun: true,
+        frameworks: [ 'jasmine' ],
+        files: [ 'src/**/*.spec.js' ],
         preprocessors: {
-            './src/index.spec.js': [ 'webpack', 'sourcemap' ] //preprocess with webpack and our sourcemap loader
+            'src/**/*.spec.js': ['webpack']
         },
-        reporters: [ 'mocha', 'coverage' ], //report results in this format
-        webpack: { //kind of a copy of your webpack config
-            devtool: 'inline-source-map', //just do inline source maps instead of the default
+        reporters: ['dots', 'coverage'],
+        coverageReporter: {
+            dir: 'bin/coverage/',
+
+            reporters: [
+                { type: 'text-summary' },
+                { type: 'html', subdir: 'html' }
+            ]
+        },
+        webpack: {
+            node: {
+                fs: 'empty'
+            },
+
+            // Instrument code that isn't test or vendor code.
             module: {
                 loaders: [
                     {
                         test: /\.jsx?$/,
-                        loaders: ['react-hot', 'babel-loader']
+                        include: path.join(__dirname, 'src'),
+                        loader: 'babel'
                     },
                     {
                         test: /\.scss$/,
                         loaders: ['style', 'css', 'sass']
                     }
                 ],
-                postLoaders: [{ //delays coverage til after tests are run, fixing transpiled source coverage error
-                    test: /\.js$/,
-                    exclude: /(node_modules|\.spec\.jsx?)/,
-                    loader: 'istanbul-instrumenter'
-                }]
+                preLoaders: [
+                    {
+                        test: /\.jsx?$/,
+                        loader: 'isparta',
+                        include: path.join(__dirname, 'src')
+                    }
+                ]
             }
         },
-        webpackServer: {
+        webpackMiddleware: {
             noInfo: true //please don't spam the console when running in karma!
-        },
-        coverageReporter: {
-            dir: 'bin/coverage/',
-            reporters: [
-                {type: 'html', subdir: 'html'}
-            ]
         }
     });
 };
