@@ -1,12 +1,12 @@
 import React from 'react';
 import * as _ from 'lodash';
+import sh from 'sh-core';
 
-import utilClasses from './util-classes.service.js';
+import IconCheckboxSelected from './icons/icon-checkbox-selected';
+import IconCheckboxUnselected from './icons/icon-checkbox-unselected';
 import IconChevronDown from './icons/icon-chevron-down';
 import IconChevronLeft from './icons/icon-chevron-left';
 import IconChevronRight from './icons/icon-chevron-right';
-import IconCheckboxUnselected from './icons/icon-checkbox-unselected';
-import IconCheckboxSelected from './icons/icon-checkbox-selected';
 
 require('./sh-input-select.scss');
 
@@ -29,7 +29,7 @@ let defaultConfig = {
         return !!_.find(options, {parentId: option.id});
     },
     treeGetChildren: (options, option) => {
-        return _.filter(options, {parentId: (option ? option.id : null)})
+        return _.filter(options, {parentId: (option ? option.id : null)});
     }
 };
 
@@ -238,7 +238,7 @@ class ShInputSelect extends React.Component {
      */
     optionSelect(option) {
         return () => {
-            if (this.isTree() && this.state.config.treeHasChildren(this.props.options, option)) {
+            if (this.checkTree(option)) {
                 this.refs.inputElement.focus();
                 if (_.last(this.state.treePath) == option) {
                     this.setState({
@@ -286,9 +286,7 @@ class ShInputSelect extends React.Component {
                 }
 
                 this.closeDropdown();
-                this.setState({
-                    value: newValue
-                });
+                this.updateStateValue(newValue);
             }
         }
     }
@@ -344,6 +342,14 @@ class ShInputSelect extends React.Component {
         return this.state.config.tree;
     }
 
+    checkTree(option) {
+        if (!this.isTree()) {
+            return false;
+        } else {
+            return this.state.config.treeHasChildren(this.props.options, option);
+        }
+    }
+
     render() {
         //noinspection JSUnusedLocalSymbols
         let {value,
@@ -377,7 +383,7 @@ class ShInputSelect extends React.Component {
         }
         let input = (
             <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp} onKeyDown={this.inputKeyDown}>
-                <div className="inputSelected">{inputSelected}</div>
+                <div className="input-selected">{inputSelected}</div>
                 <IconChevronDown />
             </div>
         );
@@ -401,14 +407,14 @@ class ShInputSelect extends React.Component {
                 let showTree = null;
                 if (this.isTree()) {
                     if (this.state.config.treeHasChildren(this.props.options, current)) {
-                        showTree = <div className="treeForwardIcon"><IconChevronRight /></div>
+                        showTree = <div className="tree-forward-icon"><IconChevronRight /></div>
                     }
                 }
 
                 return (
                     <div key={index} className="option" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)} onKeyDown={this.optionKeyDown}>
                         {showSelected}
-                        <div className="optionDetails">{this.getDisplay(current)}</div>
+                        <div className="option-details">{this.getDisplay(current)}</div>
                         {showTree}
                     </div>
                 );
@@ -416,7 +422,7 @@ class ShInputSelect extends React.Component {
         };
 
         let generateDropdownClasses = (index) => {
-            return utilClasses.getClassNames({
+            return sh.getClassNames({
                 dropdown: true,
                 multi: this.isMulti(),
                 tree: this.isTree(),
@@ -439,8 +445,8 @@ class ShInputSelect extends React.Component {
                 let tabable = this.state.treePath.length - 1 === i;
                 let treeBack = (
                     <div key="back" className="option back" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)} onKeyDown={this.optionKeyDown}>
-                        <div className="treeBackIcon"><IconChevronLeft /></div>
-                        <div className="optionDetails">{this.getDisplay(parentOption)}</div>
+                        <div className="tree-back-icon"><IconChevronLeft /></div>
+                        <div className="option-details">{this.getDisplay(parentOption)}</div>
                     </div>
                 );
 
@@ -460,13 +466,13 @@ class ShInputSelect extends React.Component {
         }
 
         let dropdownWrapper = (
-            <div className="dropdownWrapper" ref="dropdownElement">
+            <div className="dropdown-wrapper" ref="dropdownElement">
                 {dropdownPages}
             </div>
         );
 
         return (
-            <div ref="mainElement" {...other} className={utilClasses.getClassNames(mainClasses)}>
+            <div ref="mainElement" {...other} className={sh.getClassNames(mainClasses)}>
                 {input}
                 {dropdownWrapper}
             </div>
