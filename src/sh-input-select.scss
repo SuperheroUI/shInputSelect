@@ -1,6 +1,6 @@
 @import '../node_modules/sh-core/src/base';
 
-.shInputSelect {
+.sh-input-select {
     position: relative;
     display: inline-block;
     width: 100%;
@@ -15,8 +15,8 @@
         }
     }
 
-    &.openUp {
-        .dropdownWrapper {
+    &.open-up {
+        .dropdown-wrapper {
             bottom: calc(100% + 1px);
         }
 
@@ -25,8 +25,8 @@
         }
     }
 
-    &.openDown {
-        .dropdownWrapper {
+    &.open-down {
+        .dropdown-wrapper {
             top: calc(100% + 1px);
         }
 
@@ -36,7 +36,7 @@
     }
 
     &.opened {
-        &.openUp {
+        &.open-up {
             .input {
                 border-top-left-radius: 0;
                 border-top-right-radius: 0;
@@ -48,7 +48,7 @@
             }
         }
 
-        &.openDown {
+        &.open-down {
             .input {
                 border-bottom-left-radius: 0;
                 border-bottom-right-radius: 0;
@@ -60,7 +60,7 @@
             }
         }
 
-        .dropdownWrapper {
+        .dropdown-wrapper {
             height: 200px;
         }
     }
@@ -82,7 +82,7 @@
 
         @include focus;
 
-        .inputSelected {
+        .input-selected {
             height: 100%;
             line-height: 2.4;
             padding: 0 28px 0 15px;
@@ -97,7 +97,7 @@
         }
     }
 
-    .dropdownWrapper {
+    .dropdown-wrapper {
         position: absolute;
         right: 0;
         left: 0;
@@ -161,20 +161,20 @@
             text-align: center;
         }
 
-        .optionDetails {
+        .option-details {
             display: inline-block;
             width: 100%;
 
             @include ellipsis;
         }
 
-        .treeForwardIcon {
+        .tree-forward-icon {
             position: absolute;
             top: 7px;
             right: 0;
         }
 
-        .treeBackIcon {
+        .tree-back-icon {
             position: absolute;
             top: 7px;
             left: 5px;

@@ -3,10 +3,10 @@ var webpack = require('webpack');
 
 module.exports = function(config) {
     config.set({
-        browsers: [ 'PhantomJS' ],
+        browsers: ['PhantomJS'],
         singleRun: true,
-        frameworks: [ 'jasmine' ],
-        files: [ 'src/**/*.spec.js' ],
+        frameworks: ['jasmine'],
+        files: ['src/**/*.spec.js'],
         preprocessors: {
             'src/**/*.spec.js': ['webpack']
         },
@@ -15,8 +15,8 @@ module.exports = function(config) {
             dir: 'bin/coverage/',
 
             reporters: [
-                { type: 'text-summary' },
-                { type: 'html', subdir: 'html' }
+                {type: 'text-summary'},
+                {type: 'lcov', subdir: 'lcov'}
             ]
         },
         webpack: {
@@ -39,7 +39,7 @@ module.exports = function(config) {
                 ],
                 preLoaders: [
                     {
-                        test: /\.jsx?$/,
+                        test: /^((?!\.spec\.).)*\.jsx?$/,
                         loader: 'isparta',
                         include: path.join(__dirname, 'src')
                     }
