@@ -122,12 +122,24 @@ class ShInputSelect extends React.Component {
         }
     }
 
+    checkValid() {
+        if (this.state.config.required) {
+            if (this.isMulti()) {
+                return _.isEmpty(this.state.value);
+            } else {
+                return !this.state.value;
+            }
+        } else {
+            return true;
+        }
+    }
+
     validate(force) {
         let rtn = {
             isValid: true
         };
 
-        if (this.state.config.required && ((this.isMulti() && _.isEmpty(this.state.value)) || (!this.isMulti() && !this.state.value))) {
+        if (this.checkValid()) {
             rtn = {
                 isValid: false,
                 msg: 'Required'
@@ -135,7 +147,11 @@ class ShInputSelect extends React.Component {
         }
 
         if (force) {
-            let status = rtn.isValid ? 'valid' : 'error';
+            let status = 'valid';
+            if (!rtn.isValid) {
+                status = 'error';
+            }
+
             this.setState({
                 validStatus: status
             });
