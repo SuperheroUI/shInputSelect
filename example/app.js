@@ -11,6 +11,7 @@ var config2 = {
     },
     multiselect: true,
     idField: 'id',
+    required: true
 };
 
 var config3 = {

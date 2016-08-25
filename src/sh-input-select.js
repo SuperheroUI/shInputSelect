@@ -30,7 +30,8 @@ let defaultConfig = {
     },
     treeGetChildren: (options, option) => {
         return _.filter(options, {parentId: (option ? option.id : null)});
-    }
+    },
+    required: false,
 };
 
 let hotKeys = {
@@ -54,7 +55,9 @@ class ShInputSelect extends React.Component {
             dropdownDirection: 'down',
             config: _.cloneDeep(defaultConfig),
             treePath: [],
-            treeCurrentIndex: -1
+            treeCurrentIndex: -1,
+
+            validStatus: 'unknown',
         };
 
         this.checkDocumentEvent = this.checkDocumentEvent.bind(this);
@@ -63,6 +66,8 @@ class ShInputSelect extends React.Component {
         this.optionKeyUp = this.optionKeyUp.bind(this);
         this.optionSelect = this.optionSelect.bind(this);
         this.navigateTab = this.navigateTab.bind(this);
+
+        this.validate = this.validate.bind(this);
     }
 
     componentWillMount() {
@@ -73,6 +78,10 @@ class ShInputSelect extends React.Component {
 
         document.addEventListener('click', this.checkDocumentEvent);
         document.addEventListener('keyup', this.checkDocumentEvent);
+
+        if (this.props.validator) {
+            this.props.validator.register(this, this.validate);
+        }
     }
 
     componentWillReceiveProps(props) {
@@ -85,6 +94,10 @@ class ShInputSelect extends React.Component {
     componentWillUnmount() {
         document.removeEventListener('click', this.checkDocumentEvent);
         document.removeEventListener('keyup', this.checkDocumentEvent);
+
+        if (this.props.validator) {
+            this.props.validator.unregister(this);
+        }
     }
 
     checkDocumentEvent(event) {
@@ -93,7 +106,7 @@ class ShInputSelect extends React.Component {
         }
     }
 
-    updateStateValue(value) {
+    updateStateValue(value, callback) {
         if (this.isMulti()) {
             let newValue = this.props.options.filter((option) => {
                 return !!_.includes(value, this.getIdField(option));
@@ -105,8 +118,30 @@ class ShInputSelect extends React.Component {
         } else {
             this.setState({
                 value: this.getOption(value)
+            }, callback || _.noop);
+        }
+    }
+
+    validate(force) {
+        let rtn = {
+            isValid: true
+        };
+
+        if (this.state.config.required && ((this.isMulti() && _.isEmpty(this.state.value)) || (!this.isMulti() && !this.state.value))) {
+            rtn = {
+                isValid: false,
+                msg: 'Required'
+            };
+        }
+
+        if (force) {
+            let status = rtn.isValid ? 'valid' : 'error';
+            this.setState({
+                validStatus: status
             });
         }
+
+        return rtn;
     }
 
     inputKeyUp(event) {
@@ -264,6 +299,11 @@ class ShInputSelect extends React.Component {
                     let newValue = _.without(this.state.value, option);
                     this.setState({
                         value: newValue
+                    }, () => {
+                        this.validate(true);
+                        if (this.props.validator) {
+                            this.props.validator.validate();
+                        }
                     });
 
                     this.props.onChange(newValue.map((value) => {
@@ -273,6 +313,11 @@ class ShInputSelect extends React.Component {
                     let newValue = _.concat(this.state.value, option);
                     this.setState({
                         value: newValue
+                    }, () => {
+                        this.validate(true);
+                        if (this.props.validator) {
+                            this.props.validator.validate();
+                        }
                     });
 
                     this.props.onChange(newValue.map((value) => {
@@ -286,7 +331,12 @@ class ShInputSelect extends React.Component {
                 }
 
                 this.closeDropdown();
-                this.updateStateValue(newValue);
+                this.updateStateValue(newValue, () => {
+                    this.validate(true);
+                    if (this.props.validator) {
+                        this.props.validator.validate();
+                    }
+                });
             }
         }
     }
@@ -356,6 +406,8 @@ class ShInputSelect extends React.Component {
             options,
             onChange,
             config,
+
+            validator,
             ...other
         } = this.props;
 
@@ -364,7 +416,8 @@ class ShInputSelect extends React.Component {
             openDown: this.state.dropdownDirection === 'down',
             openUp: this.state.dropdownDirection !== 'down',
             closed: !this.state.dropdownOpen,
-            opened: this.state.dropdownOpen
+            opened: this.state.dropdownOpen,
+            status: this.state.validStatus,
         };
 
         let inputSelected = 'Select';
@@ -484,14 +537,16 @@ ShInputSelect.propTypes = {
     value: React.PropTypes.any,
     options: React.PropTypes.array.isRequired,
     onChange: React.PropTypes.func,
-    config: React.PropTypes.object
+    config: React.PropTypes.object,
+    validator: React.PropTypes.object,
 };
 
 ShInputSelect.defaultProps = {
     value: null,
     options: [],
     onChange: _.noop,
-    config: defaultConfig
+    config: defaultConfig,
+    validator: null,
 };
 
 export default ShInputSelect;
