@@ -16,6 +16,7 @@ var config2 = {
 
 var config3 = {
     tree: true,
+    required: true
 };
 
 class App extends React.Component {
