@@ -57,7 +57,8 @@ class ShInputSelect extends React.Component {
             treePath: [],
             treeCurrentIndex: -1,
 
-            validStatus: 'unknown',
+            statusValid: false,
+            statusTouched: false,
         };
 
         this.checkDocumentEvent = this.checkDocumentEvent.bind(this);
@@ -66,11 +67,17 @@ class ShInputSelect extends React.Component {
         this.optionKeyUp = this.optionKeyUp.bind(this);
         this.optionSelect = this.optionSelect.bind(this);
         this.navigateTab = this.navigateTab.bind(this);
+        this.onFocus = this.onFocus.bind(this);
 
         this.validate = this.validate.bind(this);
+        this.validateAll = this.validateAll.bind(this);
     }
 
     componentWillMount() {
+        if (this.props.validator) {
+            this.props.validator.register(this, this.validate);
+        }
+
         this.setState({
             config: _.assign(this.state.config, this.props.config)
         });
@@ -78,10 +85,6 @@ class ShInputSelect extends React.Component {
 
         document.addEventListener('click', this.checkDocumentEvent);
         document.addEventListener('keyup', this.checkDocumentEvent);
-
-        if (this.props.validator) {
-            this.props.validator.register(this, this.validate);
-        }
     }
 
     componentWillReceiveProps(props) {
@@ -106,7 +109,7 @@ class ShInputSelect extends React.Component {
         }
     }
 
-    updateStateValue(value, callback) {
+    updateStateValue(value) {
         if (this.isMulti()) {
             let newValue = this.props.options.filter((option) => {
                 return !!_.includes(value, this.getIdField(option));
@@ -114,15 +117,15 @@ class ShInputSelect extends React.Component {
 
             this.setState({
                 value: newValue
-            })
+            }, this.validateAll)
         } else {
             this.setState({
                 value: this.getOption(value)
-            }, callback || _.noop);
+            }, this.validateAll);
         }
     }
 
-    checkValid() {
+    checkRequired() {
         if (this.state.config.required) {
             if (this.isMulti()) {
                 return !_.isEmpty(this.state.value);
@@ -134,30 +137,39 @@ class ShInputSelect extends React.Component {
         }
     }
 
-    validate(force) {
+    validate(onSubmit) {
         let rtn = {
             isValid: true
         };
 
-        if (!this.checkValid()) {
+
+        if (!this.checkRequired()) {
             rtn = {
                 isValid: false,
                 msg: 'Required'
             };
         }
 
-        if (force) {
-            let status = 'valid';
-            if (!rtn.isValid) {
-                status = 'error';
-            }
-
-            this.setState({
-                validStatus: status
-            });
-        }
+        this.setState({
+            statusValid: rtn.isValid,
+            statusTouched: onSubmit || this.state.statusTouched
+        });
 
         return rtn;
+    }
+
+    validateAll() {
+        if (this.props.validator) {
+            this.props.validator.validate();
+        } else {
+            this.validate();
+        }
+    }
+
+    onFocus() {
+        this.setState({
+            statusTouched: true
+        })
     }
 
     inputKeyUp(event) {
@@ -311,48 +323,28 @@ class ShInputSelect extends React.Component {
                     }, 50);
                 }
             } else if (this.isMulti()) {
+                let newValue;
                 if (_.includes(this.state.value, option)) {
-                    let newValue = _.without(this.state.value, option);
-                    this.setState({
-                        value: newValue
-                    }, () => {
-                        this.validate(true);
-                        if (this.props.validator) {
-                            this.props.validator.validate();
-                        }
-                    });
-
-                    this.props.onChange(newValue.map((value) => {
-                        return this.getIdField(value);
-                    }));
+                    newValue = _.without(this.state.value, option);
                 } else {
-                    let newValue = _.concat(this.state.value, option);
-                    this.setState({
-                        value: newValue
-                    }, () => {
-                        this.validate(true);
-                        if (this.props.validator) {
-                            this.props.validator.validate();
-                        }
-                    });
-
-                    this.props.onChange(newValue.map((value) => {
-                        return this.getIdField(value);
-                    }));
+                    newValue = _.concat(this.state.value, option);
                 }
+
+                this.setState({
+                    value: newValue
+                }, this.validateAll);
+
+                this.props.onChange(newValue.map((value) => {
+                    return this.getIdField(value);
+                }));
             } else {
                 let newValue = this.getIdField(option);
+                this.updateStateValue(newValue);
+                this.closeDropdown();
+
                 if (!_.isEqual(this.state.value, newValue)) {
                     this.props.onChange(newValue);
                 }
-
-                this.closeDropdown();
-                this.updateStateValue(newValue, () => {
-                    this.validate(true);
-                    if (this.props.validator) {
-                        this.props.validator.validate();
-                    }
-                });
             }
         }
     }
@@ -422,7 +414,7 @@ class ShInputSelect extends React.Component {
             options,
             onChange,
             config,
-
+            classNames,
             validator,
             ...other
         } = this.props;
@@ -433,7 +425,12 @@ class ShInputSelect extends React.Component {
             openUp: this.state.dropdownDirection !== 'down',
             closed: !this.state.dropdownOpen,
             opened: this.state.dropdownOpen,
-            status: this.state.validStatus,
+
+            shValid: this.state.statusValid,
+            shInvalid: !this.state.statusValid,
+            shTouched: this.state.statusTouched,
+            shUntouched: !this.state.statusTouched,
+            other: classNames,
         };
 
         let inputSelected = 'Select';
@@ -451,7 +448,7 @@ class ShInputSelect extends React.Component {
             inputSelected = this.getDisplay(this.state.value);
         }
         let input = (
-            <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp} onKeyDown={this.inputKeyDown}>
+            <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp} onKeyDown={this.inputKeyDown} onFocus={this.onFocus}>
                 <div className="input-selected">{inputSelected}</div>
                 <IconChevronDown />
             </div>
