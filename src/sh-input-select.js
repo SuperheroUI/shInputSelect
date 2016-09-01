@@ -88,10 +88,12 @@ class ShInputSelect extends React.Component {
     }
 
     componentWillReceiveProps(props) {
-        this.setState({
-            config: _.assign(this.state.config, this.props.config)
-        });
-        this.updateStateValue(props.value);
+        if (!_.isEqual(this.state.config, props.config) || !_.isEqual(this.state.value, props.value)) {
+            this.setState({
+                config: _.assign(this.state.config, props.config)
+            });
+            this.updateStateValue(props.value);
+        }
     }
 
     componentWillUnmount() {
