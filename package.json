@@ -1,6 +1,6 @@
 {
   "name": "sh-input-select",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Select input box superhero theme",
   "main": "bin/sh-input-select.js",
   "scripts": {
@@ -53,6 +53,6 @@
     "lodash": "^4.14.1",
     "react": "^15.3.0",
     "react-dom": "^15.3.0",
-    "sh-core": "^0.1.19"
+    "sh-core": "^0.2.0"
   }
 }
