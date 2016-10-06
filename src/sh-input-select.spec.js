@@ -1,6 +1,7 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var TestUtils = require('react/lib/ReactTestUtils');
+var _ = require('lodash');
 
 var ShInputSelect = require('./sh-input-select').default;
 
@@ -22,6 +23,38 @@ describe('ShInputSelect', function() {
             expect(dropdownNode.innerHTML).toContain(options[0].name);
             expect(dropdownNode.innerHTML).toContain(options[1].title);
             expect(dropdownNode.innerHTML).toContain(options[2]);
+
+            root.componentWillUnmount();
+        });
+
+        it('displays getDisplay String value', function() {
+            let options = [
+                {name: 'item1'},
+                {name: 'item2'},
+                {name: 'item3'},
+            ];
+            let config = {
+                getDisplay: 'title'
+            };
+            let value = null;
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} config={config} />);
+
+            expect(root.getDisplay({title: '11'})).toBe('11');
+        });
+
+        it('displays getDisplay JSON value', function() {
+            let options = [
+                {name: 'item1'},
+                {name: 'item2'},
+                {name: 'item3'},
+            ];
+            let config = {
+                getDisplay: null
+            };
+            let value = null;
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} config={config} />);
+
+            expect(root.getDisplay({title: '11'})).toBe('{"title":"11"}');
         });
 
         it('handles click', function() {
@@ -78,6 +111,12 @@ describe('ShInputSelect', function() {
             });
 
             expect(root.state.value).toBe(options[2]);
+
+            root.componentWillReceiveProps({
+                value: options[2]
+            });
+
+            expect(root.state.value).toBe(options[2]);
         });
 
         it('select proper using idField', function() {
@@ -98,6 +137,248 @@ describe('ShInputSelect', function() {
             TestUtils.Simulate.click(rootNode.getElementsByClassName('option')[2]);
 
             expect(root.state.value).toBe(options[2]);
+        });
+
+        it('properly use a validator', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let validator = {
+                register: _.noop,
+                unregister: _.noop,
+                validate: _.noop,
+            };
+            spyOn(validator, 'register');
+            spyOn(validator, 'unregister');
+            spyOn(validator, 'validate');
+            let value = null;
+
+            expect(validator.register).not.toHaveBeenCalled();
+            expect(validator.unregister).not.toHaveBeenCalled();
+            expect(validator.validate).not.toHaveBeenCalled();
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} validator={validator}/>);
+
+            expect(validator.register).toHaveBeenCalledTimes(1);
+            expect(validator.unregister).not.toHaveBeenCalled();
+            expect(validator.validate).toHaveBeenCalledTimes(1);
+
+            root.componentWillUnmount();
+
+            expect(validator.register).toHaveBeenCalledTimes(1);
+            expect(validator.unregister).toHaveBeenCalledTimes(1);
+            expect(validator.validate).toHaveBeenCalledTimes(1);
+        });
+
+        it('properly handle required', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let config = {
+                required: true
+            };
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} config={config}/>);
+            expect(root.validate(false).isValid).toBeFalsy();
+
+            root.optionSelect(options[1])();
+            expect(root.validate(false).isValid).toBeTruthy();
+
+            root.optionSelect(options[2])();
+            expect(root.validate(false).isValid).toBeTruthy();
+        });
+
+        it('closes the dropdown when clicking somewhere else on the document', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let config = {
+                required: true
+            };
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} config={config}/>);
+            let rootNode = ReactDOM.findDOMNode(root);
+
+            expect(root.state.dropdownOpen).toBeFalsy();
+
+            root.openDropdown();
+            expect(root.state.dropdownOpen).toBeTruthy();
+
+            root.checkDocumentEvent({
+                path: [rootNode]
+            });
+            expect(root.state.dropdownOpen).toBeTruthy();
+
+            root.checkDocumentEvent({
+                path: []
+            });
+            expect(root.state.dropdownOpen).toBeFalsy();
+        });
+
+        it('sets proper touched flag', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} />);
+            let rootNode = ReactDOM.findDOMNode(root);
+
+            expect(root.state.statusTouched).toBeFalsy();
+
+            TestUtils.Simulate.focus(rootNode.getElementsByClassName('input')[0]);
+            expect(root.state.statusTouched).toBeTruthy();
+        });
+
+        it('prevents default on input hotkeys on keyDown', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} />);
+
+            let event = {
+                preventDefault: _.noop,
+                stopPropagation: _.noop
+            };
+            spyOn(event, 'preventDefault');
+            spyOn(event, 'stopPropagation');
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+
+            event.keyCode = 1;
+            root.inputKeyDown(event);
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+
+            event.keyCode = 32;
+            root.inputKeyDown(event);
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalled();
+        });
+
+        it('prevents default on option hotkeys on keyDown', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} />);
+
+            let event = {
+                preventDefault: _.noop,
+                stopPropagation: _.noop
+            };
+            spyOn(event, 'preventDefault');
+            spyOn(event, 'stopPropagation');
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+
+            event.keyCode = 1;
+            root.optionKeyDown(event);
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+
+            event.keyCode = 32;
+            root.optionKeyDown(event);
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalled();
+        });
+
+        it('input hot keys', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} />);
+
+            let event = {
+                preventDefault: _.noop,
+                stopPropagation: _.noop
+            };
+            spyOn(event, 'preventDefault');
+            spyOn(event, 'stopPropagation');
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+
+            event.keyCode = 1;
+            root.inputKeyUp(event);
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+            expect(root.state.dropdownOpen).toBeFalsy();
+
+            event.keyCode = 32;
+            root.inputKeyUp(event);
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(root.state.dropdownOpen).toBeTruthy();
+
+            event.keyCode = 27;
+            root.inputKeyUp(event);
+            expect(root.state.dropdownOpen).toBeFalsy();
+
+            event.keyCode = 40;
+            root.inputKeyUp(event);
+            expect(root.state.dropdownOpen).toBeTruthy();
+        });
+
+        it('option hot keys', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} />);
+
+            let event = {
+                preventDefault: _.noop,
+                stopPropagation: _.noop
+            };
+            spyOn(event, 'preventDefault');
+            spyOn(event, 'stopPropagation');
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+
+            event.keyCode = 1;
+            root.optionKeyUp(options[1])(event);
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+            expect(root.state.dropdownOpen).toBeFalsy();
+
+            event.keyCode = 40;
+            root.optionKeyUp(options[1], -2)(event);
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(root.state.dropdownOpen).toBeTruthy();
+
+            event.keyCode = 27;
+            root.optionKeyUp(options[1])(event);
+            expect(root.state.dropdownOpen).toBeFalsy();
+
         });
     });
 
@@ -155,6 +436,34 @@ describe('ShInputSelect', function() {
             expect(rootNode.classList).toContain('opened');
             expect(rootNode.classList).not.toContain('closed');
         });
+
+        it('properly handle required', function() {
+            let options = [
+                {name: 'item1', fff: 1},
+                {name: 'item2', fff: 3},
+                {name: 'item3', fff: 5},
+            ];
+            let config = {
+                multiselect: true,
+                required: true
+            };
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} config={config} />);
+            expect(root.validate(false).isValid).toBeFalsy();
+
+            root.optionSelect(options[1])();
+            expect(root.validate(false).isValid).toBeTruthy();
+
+            root.optionSelect(options[2])();
+            expect(root.validate(false).isValid).toBeTruthy();
+
+            root.optionSelect(options[1])();
+            expect(root.validate(false).isValid).toBeTruthy();
+
+            root.optionSelect(options[2])();
+            expect(root.validate(false).isValid).toBeFalsy();
+        });
     });
 
     describe('tree select', function() {
@@ -198,6 +507,32 @@ describe('ShInputSelect', function() {
             expect(rootNode.classList).not.toContain('opened');
             expect(rootNode.classList).toContain('closed');
             expect(root.state.value).toBe(options[1]);
+        });
+
+        it('properly handle required', function() {
+            let options = [
+                {name: 'item1', id: 1, parentId: 4},
+                {name: 'item2', id: 2, parentId: 4},
+                {name: 'item3', id: 3, parentId: 5},
+                {name: 'item4', id: 4, parentId: 6},
+                {name: 'item5', id: 5, parentId: 6},
+                {name: 'item6', id: 6, parentId: null},
+                {name: 'item7', id: 7, parentId: null},
+            ];
+            let config = {
+                tree: true,
+                required: true
+            };
+            let value = null;
+
+            let root = TestUtils.renderIntoDocument(<ShInputSelect value={value} options={options} config={config} />);
+            expect(root.validate(false).isValid).toBeFalsy();
+
+            root.optionSelect(options[5])();
+            expect(root.validate(false).isValid).toBeFalsy();
+
+            root.optionSelect(options[0])();
+            expect(root.validate(false).isValid).toBeTruthy();
         });
     });
 });

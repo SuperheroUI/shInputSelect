@@ -178,19 +178,19 @@ class ShInputSelect extends React.Component {
         if (_.includes(hotKeys, event.keyCode)) {
             event.preventDefault();
             event.stopPropagation();
-        }
 
-        switch (event.keyCode) {
-            case hotKeys.space: {
-                this.toggleDropdown();
-                break;
-            }
-            case hotKeys.esc: {
-                this.closeDropdown();
-                break;
-            }
-            case hotKeys.down: {
-                this.navigateTab(-1, -2);
+            switch (event.keyCode) {
+                case hotKeys.space: {
+                    this.toggleDropdown();
+                    break;
+                }
+                case hotKeys.esc: {
+                    this.closeDropdown();
+                    break;
+                }
+                case hotKeys.down: {
+                    this.navigateTab(-1, -2);
+                }
             }
         }
     }
@@ -230,25 +230,27 @@ class ShInputSelect extends React.Component {
 
     optionKeyUp(option, index) {
         return (event) => {
-            event.stopPropagation();
-            event.preventDefault();
+            if (_.includes(hotKeys, event.keyCode)) {
+                event.preventDefault();
+                event.stopPropagation();
 
-            switch (event.keyCode) {
-                case 32: { // Space
-                    this.optionSelect(option)();
-                    break;
-                }
-                case 27: { // Esc
-                    this.closeDropdown();
-                    break;
-                }
-                case 38: { // Up Arrow
-                    this.navigateTab(1, index);
-                    break;
-                }
-                case 40: { // Down Arrow
-                    this.navigateTab(-1, index);
-                    break;
+                switch (event.keyCode) {
+                    case hotKeys.space: { // Space
+                        this.optionSelect(option)();
+                        break;
+                    }
+                    case hotKeys.esc: { // Esc
+                        this.closeDropdown();
+                        break;
+                    }
+                    case hotKeys.up: { // Up Arrow
+                        this.navigateTab(1, index);
+                        break;
+                    }
+                    case hotKeys.down: { // Down Arrow
+                        this.navigateTab(-1, index);
+                        break;
+                    }
                 }
             }
         }
@@ -266,7 +268,10 @@ class ShInputSelect extends React.Component {
             this.openDropdown();
         }
 
-        let minIndex = (this.state.treePath.length > 0 ? -1 : 0);
+        let minIndex = 0;
+        if (this.state.treePath.length > 0) {
+            minIndex = -1;
+        }
 
         let currentElement = null;
         if (index < minIndex) {
