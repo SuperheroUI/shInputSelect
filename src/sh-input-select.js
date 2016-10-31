@@ -67,7 +67,6 @@ class ShInputSelect extends React.Component {
         this.optionKeyUp = this.optionKeyUp.bind(this);
         this.optionSelect = this.optionSelect.bind(this);
         this.navigateTab = this.navigateTab.bind(this);
-        this.onFocus = this.onFocus.bind(this);
 
         this.validate = this.validate.bind(this);
         this.validateAll = this.validateAll.bind(this);
@@ -168,12 +167,6 @@ class ShInputSelect extends React.Component {
         }
     }
 
-    onFocus() {
-        this.setState({
-            statusTouched: true
-        })
-    }
-
     inputKeyUp(event) {
         if (_.includes(hotKeys, event.keyCode)) {
             event.preventDefault();
@@ -211,6 +204,7 @@ class ShInputSelect extends React.Component {
     }
 
     closeDropdown() {
+        this.validate(true);
         this.setState({
             dropdownOpen: false
         });
