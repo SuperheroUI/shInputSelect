@@ -43,8 +43,7 @@ class App extends React.Component {
         ];
 
         this.state = {
-            value1: null,
-            value2: [2],
+            value1: null
         };
 
         this.handleChange1 = this.handleChange1.bind(this);

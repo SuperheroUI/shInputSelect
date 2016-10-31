@@ -223,7 +223,7 @@ describe('ShInputSelect', function() {
             expect(root.state.dropdownOpen).toBeFalsy();
         });
 
-        it('sets proper touched flag', function() {
+        it('should set touch flag when the select closes not opens', function() {
             let options = [
                 {name: 'item1', fff: 1},
                 {name: 'item2', fff: 3},
@@ -236,7 +236,8 @@ describe('ShInputSelect', function() {
 
             expect(root.state.statusTouched).toBeFalsy();
 
-            TestUtils.Simulate.focus(rootNode.getElementsByClassName('input')[0]);
+            TestUtils.Simulate.click(rootNode.getElementsByClassName('input')[0]);
+            TestUtils.Simulate.click(rootNode.getElementsByClassName('input')[0]);
             expect(root.state.statusTouched).toBeTruthy();
         });
 

@@ -35,6 +35,14 @@
         }
     }
 
+    &.sh-invalid {
+        &.sh-touched {
+            .input {
+                border: 1px solid $color-error;
+            }
+        }
+    }
+
     &.opened {
         &.open-up {
             .input {
