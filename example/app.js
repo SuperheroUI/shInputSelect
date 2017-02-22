@@ -9,9 +9,10 @@ var config2 = {
     getDisplay: (option) => {
         return option.name + ' - ' + option.desc;
     },
-    multiselect: true,
-    idField: 'id',
-    required: true
+    required: true,
+    getLabelDisplay:  (option) => {
+        return option.name + ' - smack' ;
+    }
 };
 
 var config3 = {
@@ -43,7 +44,8 @@ class App extends React.Component {
         ];
 
         this.state = {
-            value1: null
+            value1: null,
+            value2:null,
         };
 
         this.handleChange1 = this.handleChange1.bind(this);
@@ -84,10 +86,7 @@ class App extends React.Component {
                     <button onClick={this.update2}>Update Select 2</button>
                 </div>
                 <div style={{width: '200px'}}>
-                    <ShInputSelect value={this.state.value1} options={this.options} onChange={this.handleChange1} />
-                </div>
-                <div style={{width: '400px'}}>
-                    <ShInputSelect value={this.state.value2} options={this.options} onChange={this.handleChange2} config={config2} />
+                    <ShInputSelect value={this.state.value1} options={this.options} onChange={this.handleChange1} config={config2} />
                 </div>
                 <div style={{width: '300px'}}>
                     <ShInputSelect value={this.state.value3} options={this.options3} onChange={this.handleChange3} config={config3} />

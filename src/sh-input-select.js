@@ -7,21 +7,23 @@ import IconCheckboxUnselected from './icons/icon-checkbox-unselected';
 import IconChevronDown from './icons/icon-chevron-down';
 import IconChevronLeft from './icons/icon-chevron-left';
 import IconChevronRight from './icons/icon-chevron-right';
+import  './sh-input-select.scss';
 
-require('./sh-input-select.scss');
+let defaultGetFunction = (option) => {
+    if (_.isObject(option)) {
+        if (option.name) {
+            return option.name;
+        } else {
+            return JSON.stringify(option);
+        }
+    } else {
+        return option;
+    }
+};
 
 let defaultConfig = {
-    getDisplay: (option) => {
-        if (_.isObject(option)) {
-            if (option.name) {
-                return option.name;
-            } else {
-                return JSON.stringify(option);
-            }
-        } else {
-            return option;
-        }
-    },
+    getDisplay: defaultGetFunction,
+    getLabelDisplay: defaultGetFunction,
     multiselect: false,
     idField: null,
     tree: false,
@@ -392,6 +394,20 @@ class ShInputSelect extends React.Component {
             return JSON.stringify(option);
         }
     }
+    /**
+     * Get the proper displayable string for an label
+     * @param option - object to get the display for
+     * @returns {string} Visual representation of this option to be used as label
+     */
+    getLabel(option) {
+        if (_.isFunction(this.state.config.getLabelDisplay)) {
+            return this.state.config.getLabelDisplay(option);
+        } else if (_.isString(this.state.config.getLabelDisplay)) {
+            return _.get(option, this.state.config.getLabelDisplay);
+        } else {
+            return JSON.stringify(option);
+        }
+    }
 
     isMulti() {
         return this.state.config.multiselect;
@@ -411,7 +427,8 @@ class ShInputSelect extends React.Component {
 
     render() {
         //noinspection JSUnusedLocalSymbols
-        let {value,
+        let {
+            value,
             options,
             onChange,
             config,
@@ -441,15 +458,16 @@ class ShInputSelect extends React.Component {
             } else if (this.state.value.length === this.props.options.length) {
                 inputSelected = 'All Selected';
             } else if (this.state.value.length === 1) {
-                inputSelected = this.getDisplay(this.state.value[0]);
+                inputSelected = this.getLabel(this.state.value[0]);
             } else {
                 inputSelected = this.state.value.length + ' Selected';
             }
         } else if (this.state.value) {
-            inputSelected = this.getDisplay(this.state.value);
+            inputSelected = this.getLabel(this.state.value);
         }
         let input = (
-            <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown} onKeyUp={this.inputKeyUp} onKeyDown={this.inputKeyDown} onFocus={this.onFocus}>
+            <div className="input" ref="inputElement" tabIndex="0" onClick={this.toggleDropdown}
+                 onKeyUp={this.inputKeyUp} onKeyDown={this.inputKeyDown} onFocus={this.onFocus}>
                 <div className="input-selected">{inputSelected}</div>
                 <IconChevronDown />
             </div>
@@ -479,7 +497,9 @@ class ShInputSelect extends React.Component {
                 }
 
                 return (
-                    <div key={index} className="option" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)} onKeyDown={this.optionKeyDown}>
+                    <div key={index} className="option" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1}
+                         onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)}
+                         onKeyDown={this.optionKeyDown}>
                         {showSelected}
                         <div className="option-details">{this.getDisplay(current)}</div>
                         {showTree}
@@ -511,7 +531,9 @@ class ShInputSelect extends React.Component {
                 let parentOption = this.state.treePath[i];
                 let tabable = this.state.treePath.length - 1 === i;
                 let treeBack = (
-                    <div key="back" className="option back" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1} onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)} onKeyDown={this.optionKeyDown}>
+                    <div key="back" className="option back" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1}
+                         onClick={this.optionSelect(parentOption)} onKeyUp={this.optionKeyUp(parentOption, -1)}
+                         onKeyDown={this.optionKeyDown}>
                         <div className="tree-back-icon"><IconChevronLeft /></div>
                         <div className="option-details">{this.getDisplay(parentOption)}</div>
                     </div>
