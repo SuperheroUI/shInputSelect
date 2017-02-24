@@ -1,6 +1,6 @@
-var React = require('react');
-var ReactDOM = require('react-dom');
-var TestUtils = require('react/lib/ReactTestUtils');
+import React from 'react';
+import ReactDOM from 'react-dom';
+import TestUtils from 'react-dom/lib/ReactTestUtils';
 var _ = require('lodash');
 
 var ShInputSelect = require('./sh-input-select').default;
