@@ -45,9 +45,9 @@
     "karma-webpack": "^1.8.0",
     "node-sass": "^4.5.0",
     "phantomjs": "^2.1.7",
-    "sass-loader": "^6.0.2",
+    "sass-loader": "^4.1.1",
     "style-loader": "^0.13.2",
-    "webpack": "^2.2.1"
+    "webpack": "^1.14.0"
   },
   "dependencies": {
     "lodash": "^4.14.1",
