@@ -1,6 +1,6 @@
 {
   "name": "sh-input-select",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Select input box superhero theme",
   "main": "bin/sh-input-select.js",
   "scripts": {
@@ -27,6 +27,10 @@
   ],
   "author": "Kevin <kevinbatchelor@gmail.com>",
   "license": "MIT",
+  "peerDependencies": {
+    "react": ">=15.3.0",
+    "react-dom": ">=15.3.0"
+  },
   "devDependencies": {
     "babel-core": "^6.11.4",
     "babel-loader": "^6.2.4",
@@ -51,8 +55,6 @@
   },
   "dependencies": {
     "lodash": "^4.14.1",
-    "react": "^15.3.0",
-    "react-dom": "^15.3.0",
     "sh-core": "^0.3.3"
   }
 }
