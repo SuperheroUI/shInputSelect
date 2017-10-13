@@ -496,12 +496,14 @@ class ShInputSelect extends React.Component {
                     }
                 }
 
+                let optionDisplay = this.getDisplay(current);
+
                 return (
                     <div key={index} className="option" tabIndex={tabable && this.state.dropdownOpen ? 0 : -1}
                          onClick={this.optionSelect(current)} onKeyUp={this.optionKeyUp(current, index)}
                          onKeyDown={this.optionKeyDown}>
                         {showSelected}
-                        <div className="option-details">{this.getDisplay(current)}</div>
+                        <div className="option-details" title={optionDisplay}>{optionDisplay}</div>
                         {showTree}
                     </div>
                 );
