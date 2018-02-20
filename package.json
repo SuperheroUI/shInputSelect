@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "lodash": "^4.14.1",
+    "prop-types": "^15.6.0",
     "sh-core": "^0.3.3"
   }
 }

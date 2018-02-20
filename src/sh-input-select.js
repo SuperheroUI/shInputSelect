@@ -1,6 +1,7 @@
 import React from 'react';
 import * as _ from 'lodash';
 import sh from 'sh-core';
+import PropTypes from 'prop-types';
 
 import IconCheckboxSelected from './icons/icon-checkbox-selected';
 import IconCheckboxUnselected from './icons/icon-checkbox-unselected';
@@ -572,11 +573,11 @@ class ShInputSelect extends React.Component {
 }
 
 ShInputSelect.propTypes = {
-    value: React.PropTypes.any,
-    options: React.PropTypes.array.isRequired,
-    onChange: React.PropTypes.func,
-    config: React.PropTypes.object,
-    validator: React.PropTypes.object,
+    value: PropTypes.any,
+    options: PropTypes.array.isRequired,
+    onChange: PropTypes.func,
+    config: PropTypes.object,
+    validator: PropTypes.object,
 };
 
 ShInputSelect.defaultProps = {
